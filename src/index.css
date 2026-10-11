@@ -1,0 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 10% 7%;
+    --foreground: 0 0% 95%;
+    --card: 240 8% 13%;
+    --card-foreground: 0 0% 95%;
+    --popover: 240 8% 13%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 346 76% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 8% 18%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 240 8% 18%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 346 76% 56%;
+    --accent-foreground: 0 0% 100%;
+    --gold: 38 90% 50%;
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 8% 24%;
+    --input: 240 8% 16%;
+    --ring: 346 76% 56%;
+    --chart-1: 346 76% 56%;
+    --chart-2: 200 70% 55%;
+    --chart-3: 38 88% 55%;
+    --chart-4: 280 55% 62%;
+    --chart-5: 160 60% 45%;
+    --radius: 0.6rem;
+    --font-heading: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --sidebar-background: 240 8% 13%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 346 76% 56%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 8% 18%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 240 8% 24%;
+    --sidebar-ring: 346 76% 56%;
+  }
+
+  .light {
+    --background: 220 10% 96%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 346 76% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 0 0% 10%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 0 0% 44%;
+    --accent: 346 76% 56%;
+    --accent-foreground: 0 0% 100%;
+    --gold: 38 82% 42%;
+    --destructive: 0 80% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 8% 90%;
+    --input: 0 0% 100%;
+    --ring: 346 76% 56%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-primary: 346 76% 56%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 220 8% 90%;
+    --sidebar-ring: 346 76% 56%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: hsl(0 0% 80%); border-radius: 9999px; border: 2px solid transparent; background-clip: padding-box; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(346 40% 60%); background-clip: padding-box; }
+  .light ::-webkit-scrollbar-thumb { background: hsl(0 0% 80%); }
+}
+
+@layer components {
+  .lux-surface {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    box-shadow: 0 1px 2px rgba(17,16,24,.04), 0 6px 20px -10px rgba(17,16,24,.10);
+  }
+  .accent-bar { background: hsl(var(--accent)); }
+  .icon-chip {
+    background: hsl(var(--accent) / 0.12);
+    color: hsl(var(--accent));
+  }
+  .icon-chip-gold { background: hsl(var(--gold) / 0.14); color: hsl(var(--gold)); }
+  .text-gold { color: hsl(var(--gold)); }
+  .thead-lux { background: hsl(var(--muted)); }
+}
+
+@keyframes neuralPulse { 0%,100%{opacity:.3} 50%{opacity:1} }
+@keyframes neuralDash { from{stroke-dashoffset:24} to{stroke-dashoffset:0} }
+@keyframes neuralFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }

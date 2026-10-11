@@ -1,0 +1,122 @@
+{
+  "name": "UseCase",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "cash",
+        "activation",
+        "education",
+        "survey",
+        "channel",
+        "cashier",
+        "engagement",
+        "none"
+      ]
+    },
+    "trigger_mode": {
+      "type": "string",
+      "enum": [
+        "event",
+        "segment"
+      ]
+    },
+    "event_trigger": {
+      "type": "string"
+    },
+    "conditions": {
+      "type": "object"
+    },
+    "action_template": {
+      "type": "string",
+      "enum": [
+        "wheel",
+        "slot",
+        "deposit_prompt",
+        "payment_methods",
+        "birthday",
+        "survey_3choice",
+        "education_card",
+        "telegram_copy",
+        "whatsapp_copy"
+      ]
+    },
+    "cash_formula": {
+      "type": "object"
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "site",
+        "telegram",
+        "whatsapp",
+        "email"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "on",
+        "off"
+      ]
+    },
+    "segment_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "fire_log": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "caps": {
+      "type": "object"
+    },
+    "image_uri": {
+      "type": "string"
+    },
+    "creatives": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "shuffle_mode": {
+      "type": "boolean"
+    },
+    "button_label": {
+      "type": "string"
+    },
+    "button_link": {
+      "type": "string"
+    },
+    "content_text": {
+      "type": "string"
+    },
+    "survey_options": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "message_text": {
+      "type": "string"
+    },
+    "message_link": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "type",
+    "trigger_mode",
+    "status"
+  ]
+}

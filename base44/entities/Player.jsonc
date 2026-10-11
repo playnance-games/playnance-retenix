@@ -1,0 +1,142 @@
+{
+  "name": "Player",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "player_id": {
+      "type": "string"
+    },
+    "score": {
+      "type": "number"
+    },
+    "lifecycle": {
+      "type": "string",
+      "enum": [
+        "new",
+        "active",
+        "quiet",
+        "at-risk"
+      ]
+    },
+    "net_vs_house": {
+      "type": "string",
+      "enum": [
+        "up",
+        "down",
+        "too_thin"
+      ]
+    },
+    "net_amount": {
+      "type": "number"
+    },
+    "risk": {
+      "type": "string",
+      "enum": [
+        "clean",
+        "watch",
+        "block_offers"
+      ]
+    },
+    "favorites_stated": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "favorites_seen": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "favorite_category": {
+      "type": "string",
+      "enum": [
+        "slots",
+        "live",
+        "sports",
+        "none"
+      ]
+    },
+    "deposit_count": {
+      "type": "number"
+    },
+    "avg_deposit": {
+      "type": "number"
+    },
+    "last_deposit": {
+      "type": "number"
+    },
+    "sessions_per_week": {
+      "type": "number"
+    },
+    "last_seen": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_retenix_action": {
+      "type": "string"
+    },
+    "channels": {
+      "type": "object"
+    },
+    "feature_flags": {
+      "type": "object"
+    },
+    "bonus_budget_used_7d": {
+      "type": "number"
+    },
+    "in_session": {
+      "type": "boolean"
+    },
+    "current_game": {
+      "type": "string"
+    },
+    "session_minutes": {
+      "type": "number"
+    },
+    "avg_session_minutes": {
+      "type": "number"
+    },
+    "session_deposit": {
+      "type": "number"
+    },
+    "remaining_balance": {
+      "type": "number"
+    },
+    "total_deposits": {
+      "type": "number"
+    },
+    "withdrawals": {
+      "type": "number"
+    },
+    "total_wagered": {
+      "type": "number"
+    },
+    "first_seen": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "lifetime_sessions": {
+      "type": "number"
+    },
+    "failed_deposits_24h": {
+      "type": "number",
+      "minimum": 0
+    },
+    "chargebacks_30d": {
+      "type": "number",
+      "minimum": 0
+    },
+    "confirmed_account_abuse": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "player_id",
+    "score"
+  ]
+}
