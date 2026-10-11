@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Pencil, Eye, Trash2, FlaskConical } from "lucide-react";
 import CaseViewDialog from "@/components/cases/CaseViewDialog";
-import { Switch } from "@/components/ui/switch";
 import InfoTip from "@/components/InfoTip";
 import CaseConditionTags from "@/components/executive/CaseConditionTags";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
-export default function CaseRegisterRow({ uc, typeLabel, typeTip, hasAb, onToggle, onEdit, onDelete, segments = [] }) {
+export default function CaseRegisterRow({ uc, typeLabel, typeTip, hasAb, onEdit, onDelete, segments = [] }) {
   const [preview, setPreview] = useState(false);
   const [confirming, setConfirming] = useState(false);
   return (
@@ -21,12 +20,6 @@ export default function CaseRegisterRow({ uc, typeLabel, typeTip, hasAb, onToggl
             <FlaskConical className="w-3 h-3" /> A/B
           </span>
         )}
-      </div>
-      <div className="ex-rowtools">
-        <label className="ex-status">
-          <Switch className="ex-switch" checked={uc.status === "on"} onCheckedChange={() => onToggle(uc)} aria-label={`Enable ${uc.name}`} />
-          <span className="ex-statuslabel">{uc.status === "on" ? "on" : "off"}</span>
-        </label>
       </div>
       <div className="ex-rowtools ex-actions relative">
         <button className="ex-iconbtn" onClick={() => onEdit(uc)} title="Edit case" aria-label={`Edit ${uc.name}`}><Pencil /></button>

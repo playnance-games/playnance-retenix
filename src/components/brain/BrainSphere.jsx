@@ -5,11 +5,17 @@ import * as THREE from "three";
  * Animated AI "brain" — a fuzzy particle sphere that rotates and pulses,
  * evoking a nebula-like magenta/purple core fading to indigo edges.
  */
-export default function BrainSphere({ className = "" }) {
+const PALETTES = {
+  players: { core: "#e33e68", mid: "#c026b3", edge: "#7c2d6d" },
+  bosses: { core: "#2563eb", mid: "#4f46e5", edge: "#1e3a8a" },
+};
+
+export default function BrainSphere({ className = "", palette = "players" }) {
   const ref = useRef(null);
   useEffect(() => {
     const mount = ref.current;
     if (!mount) return;
+    const colorsFor = PALETTES[palette] || PALETTES.players;
 
     const getWidth = () => mount.clientWidth || 600;
     const getHeight = () => mount.clientHeight || 560;
@@ -27,9 +33,9 @@ export default function BrainSphere({ className = "" }) {
     const COUNT = 7000;
     const positions = new Float32Array(COUNT * 3);
     const colors = new Float32Array(COUNT * 3);
-    const core = new THREE.Color("#e33e68");
-    const mid = new THREE.Color("#c026b3");
-    const edge = new THREE.Color("#7c2d6d");
+    const core = new THREE.Color(colorsFor.core);
+    const mid = new THREE.Color(colorsFor.mid);
+    const edge = new THREE.Color(colorsFor.edge);
     for (let i = 0; i < COUNT; i++) {
       const u = Math.random();
       const r = Math.pow(u, 1.8) * 1.05;
@@ -81,8 +87,8 @@ export default function BrainSphere({ className = "" }) {
     const pathOrig = new Float32Array(PATH_COUNT * 3);
     const pathDisp = new Float32Array(PATH_COUNT * 3);
     const pathVel = new Float32Array(PATH_COUNT * 3);
-    const pathPath = new THREE.Color("#e33e68");
-    const pathEdge = new THREE.Color("#c026b3");
+    const pathPath = new THREE.Color(colorsFor.core);
+    const pathEdge = new THREE.Color(colorsFor.mid);
     let pi = 0;
     ANCHORS.forEach((a, ai) => {
       // Origin on the brain surface, in the direction of the anchor.
@@ -132,7 +138,7 @@ export default function BrainSphere({ className = "" }) {
     // Soft inner glow.
     const glowGeom = new THREE.SphereGeometry(0.38, 32, 32);
     const glowMat = new THREE.MeshBasicMaterial({
-      color: 0xe33e68,
+      color: new THREE.Color(colorsFor.core),
       transparent: true,
       opacity: 0.14,
       blending: THREE.NormalBlending,
@@ -286,7 +292,7 @@ export default function BrainSphere({ className = "" }) {
       renderer.dispose();
       if (renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
     };
-  }, []);
+  }, [palette]);
 
   return <div ref={ref} className={`brain-sphere ${className}`} style={{ cursor: "crosshair" }} aria-label="Interactive brain — click to send dots flying" />;
 }

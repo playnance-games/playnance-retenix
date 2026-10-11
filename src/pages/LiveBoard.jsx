@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { loadPlayersWithStatus } from '@/lib/playerData';
 import { Radio } from "lucide-react";
 import LiveSessionRow from "@/components/players/LiveSessionRow";
@@ -25,7 +24,7 @@ export default function LiveBoard() {
       <header className="mb-6 flex items-center gap-2">
         <Radio className="w-5 h-5 text-accent animate-pulse" />
         <div>
-          <h1 className="text-2xl font-heading font-semibold tracking-tight">Live sessions</h1>
+          <h1 className="text-2xl font-heading font-semibold tracking-tight">Live players</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{live.length} players in session · live play and balance vs house.<InfoTip text="Select a player to open full details. Balance vs house is the player's net position, not their remaining wallet balance. Green = player ahead of house, red = behind house." /></p>
         </div>
       </header>

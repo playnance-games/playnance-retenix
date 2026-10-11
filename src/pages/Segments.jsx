@@ -7,10 +7,9 @@ import Recommendations from "@/components/Recommendations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
-import { LIFECYCLES, NET_STATES, RISKS, CATEGORIES, FEATURES, matchSegment } from "@/lib/retenixLogic";
+import { matchSegment } from "@/lib/retenixLogic";
 import InfoTip from "@/components/InfoTip";
 import SegmentAiChat from "@/components/segments/SegmentAiChat";
 import FirstSegmentDialog from "@/components/segments/FirstSegmentDialog";
@@ -94,49 +93,48 @@ export default function Segments() {
           </div>
         </div>
       ) : (
-      <div className="grid md:grid-cols-2 gap-4">
-        {segments.map((s) => {
-          const assigned = (s.case_ids || []).map((id) => cases.find((c) => c.id === id)).filter(Boolean);
-          return (
-            <div key={s.id} className="lux-surface rounded-xl border border-border bg-card/40 p-5">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-accent" />
-                    <span className="font-medium">{s.name}</span>
+      <div className="ex-register-scroll">
+        <section className="ex-casegrid ex-seggrid" aria-label="Segments">
+          <div className="ex-gridhead"><div>Segment</div><div>Players</div><div>Assigned cases</div><div>Actions</div></div>
+          {loading ? <div className="p-6 text-sm text-muted-foreground">Loading segments…</div> : segments.map((s) => {
+            const assigned = (s.case_ids || []).map((id) => cases.find((c) => c.id === id)).filter(Boolean);
+            const filters = Object.entries(s.filters || {}).filter(([, v]) => v !== null && v !== "" && v !== undefined);
+            return (
+              <article key={s.id} className="ex-caserow">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Layers className="w-4 h-4 text-accent shrink-0" />
+                    <span className="ex-casename">{s.name}</span>
                     {s.built_in && <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground">built-in</span>}
                   </div>
-                  <div className="text-[11px] text-muted-foreground mt-1">{count(s)} players match</div>
+                  <div className="mt-2 flex flex-wrap gap-1.5 text-[10px]">
+                    {filters.map(([k, v]) => (
+                      <span key={k} className={`px-1.5 py-0.5 rounded border ${tagClasses(k)}`}>{k}: {String(v)}</span>
+                    ))}
+                    {filters.length === 0 && <span className="text-[11px] text-muted-foreground italic">no filters — matches all</span>}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="text-sm font-semibold tabular-nums">{count(s)}<span className="text-xs font-normal text-muted-foreground"> match</span></div>
+                <div className="min-w-0">
+                  {assigned.length ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {assigned.map((c) => (
+                        <span key={c.id} className={`px-2 py-0.5 rounded-full text-[11px] border ${c.status === "on" ? "border-accent/30 text-accent" : "border-border text-muted-foreground"}`}>{c.name}</span>
+                      ))}
+                    </div>
+                  ) : <span className="text-[11px] text-muted-foreground italic">no cases assigned</span>}
+                </div>
+                <div className="ex-rowtools ex-actions">
                   <Button size="sm" onClick={() => setFireSeg(s)}><Zap className="w-3.5 h-3.5 mr-1" /> Fire</Button>
-                  <Button variant="ghost" size="sm" onClick={() => { setEditing({ ...s }); setOpen(true); }}>Edit</Button>
+                  <Button variant="outline" size="sm" onClick={() => { setEditing({ ...s }); setOpen(true); }}>Edit</Button>
                   {!s.built_in && (
-                    <Button variant="ghost" size="sm" onClick={() => setDelSeg(s)} title="Delete segment"><Trash2 className="w-3.5 h-3.5" /></Button>
+                    <Button variant="ghost" size="sm" onClick={() => setDelSeg(s)} title="Delete segment" aria-label={`Delete ${s.name}`}><Trash2 className="w-3.5 h-3.5" /></Button>
                   )}
                 </div>
-              </div>
-
-              <div className="mt-3 flex flex-wrap gap-1.5 text-[10px]">
-                {Object.entries(s.filters || {}).filter(([, v]) => v !== null && v !== "" && v !== undefined).map(([k, v]) => (
-                  <span key={k} className={`px-1.5 py-0.5 rounded border ${tagClasses(k)}`}>{k}: {String(v)}</span>
-                ))}
-                {Object.keys(s.filters || {}).length === 0 && <span className="text-[11px] text-muted-foreground italic">no filters — matches all</span>}
-              </div>
-
-              <div className="mt-4">
-                <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5">Assigned cases</div>
-                {assigned.length ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    {assigned.map((c) => (
-                      <span key={c.id} className={`px-2 py-0.5 rounded-full text-[11px] border ${c.status === "on" ? "border-accent/30 text-accent" : "border-border text-muted-foreground"}`}>{c.name}</span>
-                    ))}
-                  </div>
-                ) : <span className="text-[11px] text-muted-foreground italic">no cases assigned</span>}
-              </div>
-            </div>
-          );
-        })}
+              </article>
+            );
+          })}
+        </section>
       </div>
       )}
 

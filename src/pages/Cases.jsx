@@ -9,7 +9,7 @@ import CaseCreateDialog from "@/components/cases/CaseCreateDialog";
 import CaseRegister from "@/components/executive/CaseRegister";
 import CaseRegisterRow from "@/components/executive/CaseRegisterRow";
 import InfoTip from "@/components/InfoTip";
-import { TYPE_LABELS, CASE_TIPS } from "@/lib/caseConstants";
+import { TYPE_LABELS, TYPE_TIPS } from "@/lib/caseConstants";
 
 export { TYPE_LABELS };
 
@@ -35,11 +35,6 @@ export default function Cases() {
   };
   useEffect(() => { load(); }, []);
 
-  const toggle = async (uc) => {
-    const next = await base44.entities.UseCase.update(uc.id, { status: uc.status === "on" ? "off" : "on" });
-    setCases((p) => p.map((x) => (x.id === uc.id ? next : x)));
-  };
-
   const remove = async (uc) => {
     await base44.entities.UseCase.delete(uc.id);
     setCases((p) => p.filter((x) => x.id !== uc.id));
@@ -53,7 +48,7 @@ export default function Cases() {
   const openEdit = (uc) => { setEditCase(uc); };
 
   const renderCaseRow = (uc) => (
-    <CaseRegisterRow key={uc.id} uc={uc} typeLabel={TYPE_LABELS[uc.type] || uc.type} typeTip={CASE_TIPS.type} hasAb={abRuns.some((r) => r.reward_case_id === uc.id)} onToggle={toggle} onEdit={openEdit} onDelete={remove} segments={segments} />
+    <CaseRegisterRow key={uc.id} uc={uc} typeLabel={TYPE_LABELS[uc.type] || uc.type} typeTip={TYPE_TIPS[uc.type] || TYPE_LABELS[uc.type] || uc.type} hasAb={abRuns.some((r) => r.reward_case_id === uc.id)} onEdit={openEdit} onDelete={remove} segments={segments} />
   );
 
   return (

@@ -1,11 +1,13 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import CaseImage from "@/components/CaseImage";
 import CaseVisual from "@/components/cases/CaseVisual";
 import CaseConditionTags from "@/components/executive/CaseConditionTags";
-import { Filter, Users, Type, Eye, ArrowDown, Send } from "lucide-react";
+import { Filter, Users, Type, Eye, ArrowDown, Send, ImageIcon, ChevronRight } from "lucide-react";
 import { TYPE_LABELS, ACTION_FORMAT_LABEL, CHANNEL_LABEL } from "@/lib/caseConstants";
 
 export default function CaseViewDialog({ uc, segments = [], open, onOpenChange }) {
+  const [visualOpen, setVisualOpen] = useState(false);
   if (!uc) return null;
   const assignedSegments = (uc.segment_ids || []).map((id) => segments.find((s) => s.id === id)?.name).filter(Boolean);
   const site = uc.channel === "site";
@@ -44,13 +46,29 @@ export default function CaseViewDialog({ uc, segments = [], open, onOpenChange }
             )}
           </>)}
           {arrow}
-          {card(<Eye className="w-4 h-4 text-accent" />, "Visual", <>
-            <div className="mt-2 rounded-xl overflow-hidden border border-border">
-              {uc.image_uri ? <CaseImage uri={uc.image_uri} className="w-full h-56 object-cover" /> : <CaseVisual uc={uc} className="h-56 w-full" />}
+          <button
+            type="button"
+            onClick={() => setVisualOpen(true)}
+            className="w-full text-left rounded-xl border border-border p-4 transition hover:border-accent hover:bg-accent/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><ImageIcon className="w-4 h-4 text-accent" /><span>Visual</span></div>
+            <div className="mt-1 flex items-center justify-between gap-3">
+              <span className="text-base font-medium">View the visual the player sees</span>
+              <span className="inline-flex items-center gap-1 text-sm font-medium text-accent">Open <ChevronRight className="w-4 h-4" /></span>
             </div>
-          </>)}
+          </button>
         </div>
       </DialogContent>
+      <Dialog open={visualOpen} onOpenChange={setVisualOpen}>
+        <DialogContent className="max-w-xl bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-lg flex items-center gap-2"><ImageIcon className="w-5 h-5 text-accent" /> {uc.name} — visual</DialogTitle>
+          </DialogHeader>
+          <div className="rounded-xl overflow-hidden border border-border">
+            {uc.image_uri ? <CaseImage uri={uc.image_uri} className="w-full h-80 object-cover" /> : <CaseVisual uc={uc} className="h-80 w-full" />}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }

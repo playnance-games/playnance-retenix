@@ -11,6 +11,17 @@ export const TYPE_LABELS = {
   none: "No action",
 };
 
+export const TYPE_TIPS = {
+  cash: "Cash gift — bonus money credited to the player. Only fires when the player is net down and their cash window is free.",
+  activation: "Activation nudge — an offer or prompt that gets the player to take a next step, like opening a game or finishing a deposit.",
+  education: "Education card — explains a feature the player hasn't used yet, such as staking or missions.",
+  survey: "3-choice survey — asks the player to pick one of three options so Retenix learns their preference.",
+  channel: "Channel copy — a message sent off-site (Telegram, WhatsApp, or email) with no on-site popup.",
+  cashier: "Cashier — a deposit or withdraw nudge shown around the cashier flow.",
+  engagement: "Engagement — encourages more play in the current session, without a cash gift.",
+  none: "No action — the case is tracked but shows nothing to the player.",
+};
+
 export const CHANNELS = ["site", "telegram", "whatsapp", "email"];
 
 export const SWEETENERS = ["none", "day", "week", "month"];

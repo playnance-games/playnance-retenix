@@ -4,6 +4,7 @@ import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider } from '@/lib/AuthContext';
+import { ModeProvider } from '@/lib/ModeContext';
 import ScrollToTop from './components/ScrollToTop';
 import Layout from '@/components/Layout';
 import Players from '@/pages/Players';
@@ -15,6 +16,8 @@ import LiveBoard from '@/pages/LiveBoard';
 import Results from '@/pages/Results';
 import Brain from '@/pages/Brain';
 import ABTests from '@/pages/ABTests';
+import Examples from '@/pages/Examples';
+import Bosses from '@/pages/Bosses';
 
 const AppRoutes = () => {
   return (
@@ -34,6 +37,8 @@ const AppRoutes = () => {
         <Route path="/results" element={<Results />} />
         <Route path="/brain" element={<Navigate to="/" replace />} />
         <Route path="/ab-tests" element={<ABTests />} />
+        <Route path="/examples" element={<Examples />} />
+        <Route path="/bosses" element={<Bosses />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
@@ -45,13 +50,15 @@ function App() {
 
   return (
     <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <ScrollToTop />
-          <AppRoutes />
-        </Router>
-        <Toaster />
-      </QueryClientProvider>
+      <ModeProvider>
+        <QueryClientProvider client={queryClientInstance}>
+          <Router>
+            <ScrollToTop />
+            <AppRoutes />
+          </Router>
+          <Toaster />
+        </QueryClientProvider>
+      </ModeProvider>
     </AuthProvider>
   )
 }
