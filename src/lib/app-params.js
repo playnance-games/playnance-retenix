@@ -14,9 +14,11 @@ const getAppParams = () => {
 	if (isClearAccessTokenRequested()) {
 		clearStoredAccessToken();
 	}
+	const appId = import.meta.env.VITE_BASE44_APP_ID;
 	return {
-		appId: import.meta.env.VITE_BASE44_APP_ID,
-		token: getAccessToken(),
+		appId,
+		// Local preview has no Base44 session. A token lets the app load the signed-in shell.
+		token: appId ? getAccessToken() : "local",
 		functionsVersion: import.meta.env.VITE_BASE44_FUNCTIONS_VERSION,
 		appBaseUrl: import.meta.env.VITE_BASE44_APP_BASE_URL,
 	}
