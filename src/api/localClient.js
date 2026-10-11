@@ -140,7 +140,7 @@ export function createLocalClient() {
       },
       logout() {},
       redirectToLogin() {
-        window.location.assign("/login");
+        window.location.assign("/");
       },
       async loginViaEmailPassword() {
         return { access_token: "local" };
