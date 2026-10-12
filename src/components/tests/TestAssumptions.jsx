@@ -1,0 +1,7 @@
+import { Input } from '@/components/ui/input';
+import InfoTip from '@/components/InfoTip';
+
+export default function TestAssumptions({ form, setForm }) {
+  const fields = [['base_response_pct', 'Baseline response', 'Assumed response probability when the action is presented directly. Not learned from app data.'], ['completion_pct', 'Extra-step completion', 'Assumed share completing the extra step. Used as a reach gate only when the action comes after it.'], ['uplift_pct', 'Post-step relative uplift', 'Assumed relative increase in response after the step, not percentage points. Applied only when the action comes after the step.']];
+  return <section className="rounded-xl border border-border p-4"><h2 className="text-sm font-semibold">Model assumptions</h2><p className="text-xs text-muted-foreground mt-1 mb-3">Planning inputs, not measured conversion rates. Change these to explore scenarios.</p><div className="grid sm:grid-cols-3 gap-4">{fields.map(([key, label, tip]) => <div key={key}><label htmlFor={key} className="text-xs">{label}<InfoTip text={tip}/></label><div className="flex items-center gap-2 mt-2"><Input id={key} type="number" min={0} max={100} step="any" value={form[key]} disabled={key !== 'base_response_pct' && (form.gate_step === 'none' || (key === 'uplift_pct' && form.reward_timing === 'before'))} onChange={e => setForm(p => ({...p,[key]: e.target.value === '' ? '' : Number(e.target.value)}))}/><span className="text-xs text-muted-foreground">%</span></div></div>)}</div></section>;
+}

@@ -1,0 +1,86 @@
+{
+  "name": "ABRun",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "segment_id": {
+      "type": "string"
+    },
+    "segment_name": {
+      "type": "string"
+    },
+    "reward_case_id": {
+      "type": "string"
+    },
+    "reward_case_name": {
+      "type": "string"
+    },
+    "gate_step": {
+      "type": "string"
+    },
+    "gate_label": {
+      "type": "string"
+    },
+    "gate_group": {
+      "type": "string",
+      "enum": [
+        "a",
+        "b"
+      ]
+    },
+    "reward_timing": {
+      "type": "string",
+      "enum": [
+        "before",
+        "after"
+      ]
+    },
+    "metric_label": {
+      "type": "string"
+    },
+    "audience": {
+      "type": "number"
+    },
+    "matched_audience": {
+      "type": "number"
+    },
+    "split": {
+      "type": "number"
+    },
+    "results": {
+      "type": "object"
+    },
+    "winner": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "completed",
+        "archived"
+      ]
+    },
+    "archived_from": {
+      "type": "string"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "simulation"
+      ]
+    },
+    "model_version": {
+      "type": "number"
+    },
+    "assumptions": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "name",
+    "reward_case_id"
+  ]
+}

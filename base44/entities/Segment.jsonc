@@ -1,0 +1,27 @@
+{
+  "name": "Segment",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "seg_key": {
+      "type": "string"
+    },
+    "filters": {
+      "type": "object"
+    },
+    "case_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "built_in": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

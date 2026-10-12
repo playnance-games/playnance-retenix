@@ -1,0 +1,40 @@
+{
+  "name": "Settings",
+  "type": "object",
+  "properties": {
+    "haircut_pct": {
+      "type": "number"
+    },
+    "per_gift_ceiling": {
+      "type": "string"
+    },
+    "cash_window_days": {
+      "type": "number"
+    },
+    "lock_sweeteners": {
+      "type": "object"
+    },
+    "education_caps": {
+      "type": "object"
+    },
+    "quiet_hours_default": {
+      "type": "object"
+    },
+    "feature_list": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "score_weights": {
+      "type": "object"
+    },
+    "lifecycle_rules": {
+      "type": "object"
+    },
+    "risk_rules": {
+      "type": "object"
+    }
+  },
+  "required": []
+}

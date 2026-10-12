@@ -1,0 +1,7 @@
+import { derivePlayerStatus, assessPlayerRisk } from '@/lib/playerStatus';
+
+export default function StatusRulePreview({ players, settings }) {
+  const rows = players.map(player=>({player,...derivePlayerStatus(player,settings),...assessPlayerRisk(player,settings)}));
+  const flagged = rows.filter(p=>p.risk!=='clean');
+  return <section className="rounded-xl border border-primary/20 bg-primary/5 p-5"><h2 className="text-sm font-semibold">Preview on {players.length} current players</h2><p className="mt-1 text-xs text-muted-foreground">Unsaved rule preview. Save applies the settings and refreshes stored player tags.</p><div className="flex flex-wrap gap-4 mt-4 text-xs">{['clean','watch','block_offers'].map(risk=><span key={risk}><strong>{rows.filter(p=>p.risk===risk).length}</strong> {risk.replaceAll('_',' ')}</span>)}</div><div className="flex flex-wrap gap-4 mt-2 text-xs text-muted-foreground">{['new','active','quiet','at-risk'].map(stage=><span key={stage}>{rows.filter(p=>p.lifecycle===stage).length} {stage}</span>)}</div><div className="mt-3 space-y-2">{flagged.slice(0,5).map(row=><p key={row.player.id} className="text-xs"><strong>{row.player.name}</strong> · {row.risk.replaceAll('_',' ')} — {row.reasons.map(r=>r.label).join('; ')}</p>)}</div>{flagged.length>5 && <p className="text-xs mt-2 text-muted-foreground">Showing 5 of {flagged.length} flagged players.</p>}<p className="text-[11px] mt-3 text-muted-foreground">{rows.filter(p=>p.missing.length).length} players have incomplete risk inputs; unobserved signals are skipped.</p></section>;
+}
