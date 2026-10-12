@@ -6,11 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import LifecycleRulesEditor from '@/components/settings/LifecycleRulesEditor';
 import RiskRulesEditor from '@/components/settings/RiskRulesEditor';
-import StatusRulePreview from '@/components/settings/StatusRulePreview';
 import SettingsAiChat from '@/components/settings/SettingsAiChat';
 import { LIFECYCLE_DEFAULTS, RISK_DEFAULTS, riskRules, lifecycleRules, validateStatusRules } from '@/lib/statusRules';
 import { derivePlayerStatus } from '@/lib/playerStatus';
-import { Save, ChevronDown } from "lucide-react";
+import { useMode } from "@/lib/ModeContext";
+import { Save, Gift, Gauge } from "lucide-react";
 import InfoTip from "@/components/InfoTip";
 
 const DEFAULT = {
@@ -28,12 +28,10 @@ const DEFAULT = {
 
 const FT = {
   haircut: "% of the player's net-down that the cash gift is based on (before the per-gift ceiling).",
-  ceiling: "Maximum cash per gift — typically 1 × the player's average deposit.",
+  ceiling: "Maximum cash per gift, as a multiple of the player's average deposit.",
   window: "Rolling window (days) during which only one cash gift is allowed per player.",
-  sweeteners: "Extra bonus % added to a cash gift when the player accepts a staking lock.",
   edCaps: "Limits on education cards: per single session and per rolling week.",
-  quiet: "Default quiet window — suppress non-urgent cases during these hours.",
-  weights: "House-defined blend of five signals. Read-only at the dashboard level — net vs house is excluded as a separate cash gate.",
+  weights: "How the five signals combine into the retention score. They must add up to 100%. Net vs house is not a score signal — it only decides whether a cash gift can fire.",
   lifecycleDefs: "The thresholds that move a player between lifecycle stages (new, active, quiet, at-risk), evaluated from sessions/week, last-seen, and score.",
   riskDefs: "The thresholds that set a player's risk level (clean, watch, block_offers), evaluated from net vs house, withdrawal-to-deposit ratio, and failed deposits.",
 };
@@ -50,21 +48,21 @@ function SectionTitle({ children, tip }) {
   return (
     <div className="flex items-center gap-2 mb-4">
       <span className="w-1 h-4 rounded-full accent-bar" />
-      <h2 className="text-sm font-heading font-medium tracking-wide">{children}</h2>
+      <h2 className="text-sm font-heading font-medium tracking-wide flex items-center gap-1.5">{children}</h2>
       {tip && <InfoTip text={tip} />}
     </div>
   );
 }
 
 export default function Settings() {
+  const { mode } = useMode();
+  const playersMode = mode !== "bosses";
   const [s, setS] = useState(null);
   const [id, setId] = useState(null);
   const [saved, setSaved] = useState(false);
   const [players, setPlayers] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [showSettings, setShowSettings] = useState(false);
-
   useEffect(() => {
     (async () => {
       const [list, p] = await Promise.all([base44.entities.Settings.list(), base44.entities.Player.list('-created_date', 1000)]);
@@ -93,8 +91,9 @@ export default function Settings() {
   };
 
   const totalWeight = SCORE_WEIGHT_DEFS.reduce((a, d) => a + (s.score_weights?.[d.key] ?? d.value), 0);
+  const weightError = totalWeight === 100 ? "" : `Score weights add up to ${totalWeight}%. They need to total 100%.`;
 
-  const validation = validateStatusRules(s);
+  const validation = validateStatusRules(s) || weightError;
   const save = async () => {
     if (validation) { setError(validation); return; }
     setSaving(true); setError('');
@@ -118,26 +117,50 @@ export default function Settings() {
             <span className="w-1.5 h-7 rounded-full accent-bar" />
             <h1 className="text-3xl font-heading font-semibold tracking-tight">Settings</h1>
           </div>
-          <p className="text-sm text-muted-foreground mt-2 ml-4">House defaults for Retenix.</p>
+          <p className="text-sm text-muted-foreground mt-2 ml-4">{playersMode ? "Cash gifts for players, and the score weights that rank them." : "Score weights for the players on your platforms. Cash gifts are a Players-mode setting."}</p>
         </div>
         <Button onClick={save} disabled={saving || !!validation}><Save className="w-4 h-4 mr-1" /> {saving ? "Saving & updating tags…" : saved ? "Saved" : "Save"}</Button>
       </header>
 
       {(error || validation) && <p role="alert" className="mb-4 text-sm text-destructive">{error || validation}</p>}
-      <SettingsAiChat settings={s} onApply={applyPatch} />
-      <div className="flex items-center mt-4">
-        <button onClick={() => setShowSettings((v) => !v)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition">
-          <ChevronDown className={`w-4 h-4 transition-transform ${showSettings ? "rotate-180" : ""}`} /> {showSettings ? "Hide current values" : "Show current values"}
-        </button>
-      </div>
-      {showSettings && (
-      <fieldset disabled className="grid md:grid-cols-2 gap-5 mt-4">
-        <div className="lux-surface rounded-2xl border border-border bg-card/40 p-5">
-          <SectionTitle tip={FT.haircut}>Cash</SectionTitle>
-          <div className="space-y-3">
+
+      <section className="lux-surface rounded-2xl border border-border bg-card p-5">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <SectionTitle tip={FT.weights}><Gauge className="w-4 h-4 text-accent" /> Score weights</SectionTitle>
+          <span className={`text-sm font-semibold tabular-nums ${totalWeight === 100 ? "text-emerald-600" : "text-destructive"}`}>{totalWeight}% / 100%</span>
+        </div>
+        <p className="text-sm text-muted-foreground -mt-2 mb-5">These five signals make up every player's retention score. Change a weight and the others have to keep the total at 100%.</p>
+        <div className="space-y-4">
+          {SCORE_WEIGHT_DEFS.map((d) => {
+            const v = s.score_weights?.[d.key] ?? d.value;
+            return (
+              <div key={d.key} className="grid grid-cols-[minmax(0,1fr)_7.5rem] gap-4 items-center">
+                <div>
+                  <div className="text-sm mb-1.5">
+                    <span className="font-medium flex items-center gap-1">{d.label} <InfoTip text={d.desc} /></span>
+                  </div>
+                  <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full rounded-full accent-bar transition-all" style={{ width: `${Math.max(0, Math.min(v, 100))}%` }} />
+                  </div>
+                </div>
+                <label className="flex items-center gap-1.5">
+                  <Input type="number" min="0" max="100" value={v} aria-label={`${d.label} weight percent`} onChange={(e) => setNested("score_weights", d.key, Number(e.target.value))} className="text-right font-semibold tabular-nums" />
+                  <span className="text-xs text-muted-foreground">%</span>
+                </label>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {playersMode ? (
+        <section className="lux-surface rounded-2xl border border-border bg-card p-5 mt-5">
+          <SectionTitle tip={FT.haircut}><Gift className="w-4 h-4 text-accent" /> Cash gift</SectionTitle>
+          <p className="text-sm text-muted-foreground -mt-2 mb-4">A cash gift is min(haircut% of how far the player is down, ceiling × their average deposit). One gift per player per window. Bosses don't give cash gifts.</p>
+          <div className="grid sm:grid-cols-3 gap-4">
             <div>
-              <Label className="text-xs flex items-center gap-1">Haircut % (of net down) <InfoTip text={FT.haircut} /></Label>
-              <Input type="number" value={s.haircut_pct} onChange={(e) => set("haircut_pct", Number(e.target.value))} className="mt-1" />
+              <Label className="text-xs flex items-center gap-1">Haircut % of net down <InfoTip text={FT.haircut} /></Label>
+              <Input type="number" min="0" max="100" value={s.haircut_pct} onChange={(e) => set("haircut_pct", Number(e.target.value))} className="mt-1" />
             </div>
             <div>
               <Label className="text-xs flex items-center gap-1">Per-gift ceiling <InfoTip text={FT.ceiling} /></Label>
@@ -145,98 +168,53 @@ export default function Settings() {
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Pick ceiling" /></SelectTrigger>
                 <SelectContent>
                   {["1x", "2x", "3x", "4x", "5x"].map((o) => (
-                    <SelectItem key={o} value={o}>{o} avg deposit</SelectItem>
+                    <SelectItem key={o} value={o}>{o} average deposit</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-xs flex items-center gap-1">Cash window (days) <InfoTip text={FT.window} /></Label>
-              <Input type="number" value={s.cash_window_days} onChange={(e) => set("cash_window_days", Number(e.target.value))} className="mt-1" />
-            </div>
-          </div>
-        </div>
-
-        <div className="lux-surface rounded-2xl border border-border bg-card/40 p-5">
-          <SectionTitle tip={FT.sweeteners}>Lock sweeteners (%)</SectionTitle>
-          <div className="grid grid-cols-3 gap-3">
-            {["day", "week", "month"].map((k) => (
-              <div key={k}>
-                <Label className="text-xs capitalize flex items-center gap-1">{k} <InfoTip text={FT.sweeteners} /></Label>
-                <Input type="number" value={s.lock_sweeteners?.[k] ?? 0} onChange={(e) => setNested("lock_sweeteners", k, Number(e.target.value))} className="mt-1" />
+              <Label className="text-xs flex items-center gap-1">One gift per <InfoTip text={FT.window} /></Label>
+              <div className="relative mt-1">
+                <Input type="number" min="1" value={s.cash_window_days} onChange={(e) => set("cash_window_days", Number(e.target.value))} className="pr-12" />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">days</span>
               </div>
-            ))}
-          </div>
-          <div className="mt-5">
-            <SectionTitle tip={FT.edCaps}>Education caps</SectionTitle>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs flex items-center gap-1">Per session <InfoTip text={FT.edCaps} /></Label>
-              <Input type="number" value={s.education_caps?.per_session ?? 1} onChange={(e) => setNested("education_caps", "per_session", Number(e.target.value))} className="mt-1" />
-            </div>
-            <div>
-              <Label className="text-xs flex items-center gap-1">Per week <InfoTip text={FT.edCaps} /></Label>
-              <Input type="number" value={s.education_caps?.per_week ?? 2} onChange={(e) => setNested("education_caps", "per_week", Number(e.target.value))} className="mt-1" />
             </div>
           </div>
-        </div>
+        </section>
+      ) : (
+        <p className="mt-5 text-sm text-muted-foreground rounded-xl border border-dashed border-border px-4 py-3">Cash gifts belong to Players mode. A boss's platform doesn't pay them.</p>
+      )}
 
-        <div className="lux-surface rounded-2xl border border-border bg-card/40 p-5">
-          <SectionTitle tip={FT.quiet}>Quiet hours default</SectionTitle>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs flex items-center gap-1">Start <InfoTip text={FT.quiet} /></Label>
-              <Input type="time" value={s.quiet_hours_default?.start ?? ""} onChange={(e) => setNested("quiet_hours_default", "start", e.target.value)} className="mt-1" />
+      <details className="mt-6 group">
+        <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">More house rules — education, lifecycle, risk</summary>
+        <div className="grid lg:grid-cols-2 gap-5 mt-4">
+          <div className="lux-surface rounded-2xl border border-border bg-card/40 p-5">
+            <SectionTitle tip={FT.edCaps}>Education caps</SectionTitle>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Per session</Label>
+                <Input type="number" value={s.education_caps?.per_session ?? 1} onChange={(e) => setNested("education_caps", "per_session", Number(e.target.value))} className="mt-1" />
+              </div>
+              <div>
+                <Label className="text-xs">Per week</Label>
+                <Input type="number" value={s.education_caps?.per_week ?? 2} onChange={(e) => setNested("education_caps", "per_week", Number(e.target.value))} className="mt-1" />
+              </div>
             </div>
-            <div>
-              <Label className="text-xs flex items-center gap-1">End <InfoTip text={FT.quiet} /></Label>
-              <Input type="time" value={s.quiet_hours_default?.end ?? ""} onChange={(e) => setNested("quiet_hours_default", "end", e.target.value)} className="mt-1" />
-            </div>
-          </div>
-          <div className="mt-5">
-            <SectionTitle>Education feature list</SectionTitle>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="mt-4 flex flex-wrap gap-1.5">
               {(s.feature_list || []).map((f) => (
                 <span key={f} className="px-2 py-0.5 rounded-full text-[11px] border border-accent/25 text-accent">{f}</span>
               ))}
             </div>
           </div>
-        </div>
-
-        <div className="lux-surface rounded-2xl border border-border bg-card/40 p-5">
-          <SectionTitle tip={FT.weights}>Score weights</SectionTitle>
-          <p className="text-xs text-muted-foreground mb-4">House-defined blend of five signals. Read-only — change at the engine level.</p>
-          <div className="space-y-4">
-            {SCORE_WEIGHT_DEFS.map((d) => {
-              const v = s.score_weights?.[d.key] ?? d.value;
-              return (
-                <div key={d.key}>
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-foreground font-medium flex items-center gap-1">{d.label} <InfoTip text={d.desc} /></span>
-                    <span className="font-mono text-muted-foreground">{v}%</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-muted/50 overflow-hidden">
-                    <div className="h-full rounded-full accent-bar" style={{ width: `${v}%` }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-4 pt-3 border-t border-border/50">
-            <span>Total</span>
-            <span className="font-mono text-accent">{totalWeight}%</span>
+          <div className="lg:col-span-2 space-y-5">
+            <LifecycleRulesEditor rules={lr} onChange={(k, v) => setNested("lifecycle_rules", k, v)} />
+            <RiskRulesEditor rules={rr} players={players} onChange={(k, v) => setNested("risk_rules", k, v)} />
           </div>
         </div>
+      </details>
 
-        <div className="md:col-span-2 space-y-5">
-          <LifecycleRulesEditor rules={lr} onChange={(k,v)=>setNested('lifecycle_rules',k,v)}/>
-          <RiskRulesEditor rules={rr} players={players} onChange={(k,v)=>setNested('risk_rules',k,v)}/>
-          {!validation && <StatusRulePreview players={players} settings={s}/>}
-          <p className="text-[11px] text-muted-foreground">Preview and tag refresh cover up to 1,000 current players. Thresholds are starting review defaults, not a diagnosis or an abuse determination.</p>
-        </div>
-      </fieldset>
-      )}
+      <div className="mt-6"><SettingsAiChat settings={s} onApply={applyPatch} allowCash={playersMode} /></div>
     </div>
   );
 }

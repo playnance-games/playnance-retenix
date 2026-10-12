@@ -3,9 +3,12 @@ import { base44 } from "@/api/base44Client";
 import { Sparkles, Send, Loader2, Check } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
-export default function SettingsAiChat({ settings, onApply }) {
+export default function SettingsAiChat({ settings, onApply, allowCash = true }) {
   const [messages, setMessages] = useState([
-    { role: "assistant", content: "What would you like to change in your house settings? I can adjust cash policy, how quiet or at-risk players are defined, risk thresholds, lock sweeteners, quiet hours, and more.", options: ["Change cash policy", "Adjust quiet-player rules", "Adjust risk rules"] },
+    { role: "assistant", content: allowCash
+      ? "What would you like to change? I can adjust the cash gift (haircut, ceiling, window) and the score weights."
+      : "What would you like to change? I can adjust the score weights. Cash gifts are a Players-mode setting.",
+      options: allowCash ? ["Change the cash gift", "Rebalance the score weights"] : ["Rebalance the score weights"] },
   ]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
