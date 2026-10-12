@@ -3,13 +3,17 @@ import { base44 } from "@/api/base44Client";
 import { Sparkles, Send, Loader2, Check } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
+const opener = (allowCash) => ({
+  role: "assistant",
+  content: allowCash
+    ? "What would you like to change? I can adjust the cash gift (haircut, ceiling, window) and the score weights."
+    : "What would you like to change? I can adjust the score weights. Cash gifts are a Players-mode setting.",
+  options: allowCash ? ["Change the cash gift", "Rebalance the score weights"] : ["Rebalance the score weights"],
+});
+
 export default function SettingsAiChat({ settings, onApply, allowCash = true }) {
-  const [messages, setMessages] = useState([
-    { role: "assistant", content: allowCash
-      ? "What would you like to change? I can adjust the cash gift (haircut, ceiling, window) and the score weights."
-      : "What would you like to change? I can adjust the score weights. Cash gifts are a Players-mode setting.",
-      options: allowCash ? ["Change the cash gift", "Rebalance the score weights"] : ["Rebalance the score weights"] },
-  ]);
+  const [messages, setMessages] = useState(() => [opener(allowCash)]);
+  useEffect(() => { setMessages([opener(allowCash)]); }, [allowCash]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [complete, setComplete] = useState(false);
