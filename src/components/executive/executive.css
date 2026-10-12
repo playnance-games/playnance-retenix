@@ -84,10 +84,6 @@ body:has(.executive-app[data-theme=dark]) {
 .executive-app .ex-register-scroll{overflow-x:auto;border:1px solid var(--ex-border);border-radius:var(--ex-radius);background:var(--ex-surface);box-shadow:var(--ex-shadow)}
 .executive-app .ex-casegrid{min-width:720px}
 .executive-app :is(.ex-gridhead,.ex-caserow){display:grid;grid-template-columns:minmax(240px,1.5fr) minmax(150px,.8fr) 150px;align-items:center;column-gap:20px;padding:0 22px}
-.executive-app .ex-seggrid :is(.ex-gridhead,.ex-caserow){grid-template-columns:minmax(260px,1.6fr) 90px minmax(160px,1fr) 210px}
-.executive-app .ex-seggrid .ex-caserow{min-height:96px;padding-top:16px;padding-bottom:16px}
-.executive-app .ex-bossgrid :is(.ex-gridhead,.ex-caserow){grid-template-columns:minmax(220px,1.5fr) 90px 80px 120px 130px minmax(150px,1fr) 130px}
-.executive-app .ex-bossgrid .ex-caserow{min-height:84px;padding-top:14px;padding-bottom:14px;cursor:pointer}
 .executive-app .ex-gridhead{height:46px;background:var(--ex-surface-2);color:var(--ex-muted);border-bottom:1px solid var(--ex-border);font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
 .executive-app .ex-caserow{min-height:140px;border-bottom:1px solid var(--ex-border);position:relative;background:var(--ex-surface);color:var(--ex-ink);transition:background .15s}.executive-app .ex-caserow:last-child{border-bottom:0}.executive-app .ex-caserow:hover{background:var(--ex-surface-2)}
 .executive-app .ex-caseidentity{display:flex;align-items:center;gap:12px;padding:16px 0;min-width:0}.executive-app .ex-caseidentity>div{min-width:0}
@@ -214,3 +210,35 @@ body:has(.executive-app[data-mode=bosses][data-theme=dark]),
   --chart-1:221 83% 53%; --sidebar-primary:221 83% 53%; --sidebar-ring:221 83% 53%;
 }
 .executive-app[data-mode=bosses] .pop-map{background:radial-gradient(circle at 42% 48%, #ffffff 0%, #f2f6ff 70%, #e8effc 100%)}
+/* Compact one-per-row lists: Cases, Segments, Bosses, Players. */
+.executive-app .ex-list{border:1px solid var(--ex-border);border-radius:var(--ex-radius);background:var(--ex-surface);box-shadow:var(--ex-shadow);overflow-x:auto}
+.executive-app .ex-listinner{min-width:var(--min,760px)}
+.executive-app :is(.ex-listhead,.ex-row){display:grid;grid-template-columns:var(--cols);align-items:center;column-gap:18px;padding:0 20px}
+.executive-app .ex-listhead{height:40px;background:var(--ex-surface-2);border-bottom:1px solid var(--ex-border);color:var(--ex-muted);font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.executive-app .ex-row{min-height:72px;padding-top:12px;padding-bottom:12px;border-bottom:1px solid var(--ex-border);color:var(--ex-ink);transition:background .15s}
+.executive-app .ex-row:last-child{border-bottom:0}
+.executive-app .ex-row:hover{background:var(--ex-surface-2)}
+.executive-app .ex-row.clickable{cursor:pointer}
+.executive-app .ex-row.clickable:focus-visible{outline:2px solid var(--ex-accent);outline-offset:-2px}
+.executive-app .ex-rowmain{display:flex;align-items:center;gap:12px;min-width:0}
+.executive-app .ex-rowicon{width:38px;height:38px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;background:var(--ex-accent-soft);color:var(--ex-accent);font-weight:700;font-size:13px}
+.executive-app .ex-rowicon svg{width:18px;height:18px}
+.executive-app .ex-rowicon.muted{background:var(--ex-surface-2);color:var(--ex-muted);border:1px solid var(--ex-border)}
+.executive-app .ex-rowtext{min-width:0}
+.executive-app .ex-rowtitle{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:600;line-height:1.3;color:var(--ex-ink)}
+.executive-app .ex-rowtitle>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.executive-app .ex-rowsub{margin-top:3px;font-size:12px;color:var(--ex-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.executive-app .ex-badge{flex:none;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;border-radius:5px;padding:2px 6px;background:var(--ex-surface-2);color:var(--ex-muted);border:1px solid var(--ex-border)}
+.executive-app .ex-badge.accent{background:var(--ex-accent-soft);color:var(--ex-accent);border-color:transparent}
+.executive-app .ex-num{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ex-ink)}
+.executive-app .ex-num small{display:block;font-size:11px;font-weight:500;color:var(--ex-muted);margin-top:1px}
+.executive-app .ex-chips2{display:flex;flex-wrap:wrap;gap:5px;min-width:0}
+.executive-app .ex-chip2{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:500;line-height:1.4;padding:2px 8px;border-radius:999px;background:var(--ex-surface-2);border:1px solid var(--ex-border);color:var(--ex-ink)}
+.executive-app .ex-chip2.more{color:var(--ex-muted);background:transparent}
+.executive-app .ex-none{font-size:12px;color:var(--ex-muted);font-style:italic}
+.executive-app .ex-rowactions{display:flex;align-items:center;justify-content:flex-end;gap:6px}
+.executive-app .ex-chevron{color:var(--ex-muted);justify-self:end}
+.executive-app .ex-row:hover .ex-chevron{color:var(--ex-accent)}
+.executive-app .ex-scorebar{height:4px;border-radius:99px;background:var(--ex-border);margin-top:5px;overflow:hidden;width:64px}
+.executive-app .ex-scorebar>span{display:block;height:100%;background:var(--ex-accent);border-radius:99px}
+.executive-app .ex-livedot{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.18);flex:none}

@@ -1,6 +1,11 @@
+import { ListShell, ListMessage } from "@/components/executive/ListParts";
+
+export const CASE_COLS = "minmax(240px,1.6fr) minmax(150px,.8fr) minmax(200px,1.2fr) minmax(120px,.7fr) 128px";
+
 export default function CaseRegister({ cases, renderRow, loading }) {
-  return <div className="ex-register-scroll"><section className="ex-casegrid" aria-label="Cases">
-    <div className="ex-gridhead"><div>Case</div><div>Type</div><div>Actions</div></div>
-    {loading ? <div className="p-6 text-sm text-muted-foreground">Loading cases…</div> : cases.length ? cases.map(renderRow) : <div className="p-6 text-sm text-muted-foreground">No cases yet.</div>}
-  </section></div>;
+  return (
+    <ListShell cols={CASE_COLS} minWidth={900} label="Cases" head={["Case", "Type", "Who it targets", "Segments", { label: "Actions", right: true }]}>
+      {loading ? <ListMessage>Loading cases…</ListMessage> : cases.length ? cases.map(renderRow) : <ListMessage>No cases yet.</ListMessage>}
+    </ListShell>
+  );
 }

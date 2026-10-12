@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Crown, ArrowUpRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { loadBossesWithStats, money, TIER_CLASS } from "@/lib/bosses";
+import { Crown, ChevronRight } from "lucide-react";
+import { loadBossesWithStats, money } from "@/lib/bosses";
 import InfoTip from "@/components/InfoTip";
+import { ListShell, RowMain, ChipList, ListMessage } from "@/components/executive/ListParts";
 
 export default function Bosses() {
   const navigate = useNavigate();
@@ -13,6 +13,8 @@ export default function Bosses() {
     loadBossesWithStats().then((list) => { setBosses(list); setLoading(false); });
   }, []);
 
+  const open = (boss) => navigate(`/bosses/${boss.id}`);
+
   return (
     <div className="ex-page">
       <header className="mb-6">
@@ -20,47 +22,38 @@ export default function Bosses() {
           <Crown className="w-5 h-5 text-accent" />
           <h1 className="text-2xl font-heading font-semibold tracking-tight">Bosses</h1>
         </div>
-        <p className="text-sm text-muted-foreground mt-1">Bosses own the platforms players play on. Open a row for the full card.<InfoTip text="A player can play on several bosses' platforms; each boss counts only the player's share of activity on their platform. House net is what the house is up on those players. Commission is the boss's share of that net win." /></p>
+        <p className="text-sm text-muted-foreground mt-1">{bosses.length} bosses. Each owns a platform; click a row for the full card.<InfoTip text="A player can play on several bosses' platforms; each boss counts only the player's share of activity on their platform." /></p>
       </header>
-      <div className="ex-register-scroll">
-        <section className="ex-casegrid ex-bossgrid" aria-label="Bosses">
-          <div className="ex-gridhead">
-            <div>Boss</div><div>Players</div><div>Live</div><div>Deposits</div><div>Commission</div><div>Top games</div><div>Actions</div>
-          </div>
-          {loading ? <div className="p-6 text-sm text-muted-foreground">Loading bosses…</div> : bosses.map((boss) => (
-            <article
-              key={boss.id}
-              className="ex-caserow"
-              role="link"
-              tabIndex={0}
-              onClick={() => navigate(`/bosses/${boss.id}`)}
-              onKeyDown={(e) => { if (e.key === "Enter") navigate(`/bosses/${boss.id}`); }}
-            >
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="ex-casename">{boss.name}</span>
-                  <span className={`text-[10px] font-semibold uppercase tracking-wide rounded px-2 py-0.5 ${TIER_CLASS[boss.tier] || "bg-muted"}`}>{boss.tier}</span>
-                </div>
-                <div className="ex-subline"><span className="font-medium text-foreground">{boss.platform}</span> · {boss.region} · {boss.channel}</div>
-              </div>
-              <div className="text-sm font-semibold tabular-nums">{boss.players}</div>
-              <div className="text-sm font-semibold tabular-nums">{boss.inSession}</div>
-              <div className="text-sm font-semibold tabular-nums">{money(boss.deposits)}</div>
-              <div className="text-sm font-semibold tabular-nums">{money(boss.commission)}</div>
-              <div className="flex flex-wrap gap-1.5 min-w-0">
-                {boss.topGames.length
-                  ? boss.topGames.map((g) => <span key={g.name} className="rounded-full border border-accent/30 text-accent px-2 py-0.5 text-[11px] font-medium">{g.name}</span>)
-                  : <span className="text-[11px] text-muted-foreground italic">none yet</span>}
-              </div>
-              <div className="ex-rowtools">
-                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/bosses/${boss.id}`); }} aria-label={`Open ${boss.name}`}>
-                  Open card <ArrowUpRight className="w-3.5 h-3.5" />
-                </Button>
-              </div>
-            </article>
-          ))}
-        </section>
-      </div>
+      <ListShell
+        cols="minmax(240px,1.6fr) 100px 120px 120px minmax(170px,1fr) 28px"
+        minWidth={860}
+        label="Bosses"
+        head={["Boss", "Players", "Deposits", "Commission", "Top games", ""]}
+      >
+        {loading ? <ListMessage>Loading bosses…</ListMessage> : bosses.map((boss) => (
+          <article
+            key={boss.id}
+            className="ex-row clickable"
+            role="link"
+            tabIndex={0}
+            aria-label={`Open ${boss.name}`}
+            onClick={() => open(boss)}
+            onKeyDown={(e) => { if (e.key === "Enter") open(boss); }}
+          >
+            <RowMain
+              icon={boss.name.split(" ").map((p) => p[0]).join("").slice(0, 2)}
+              title={boss.name}
+              badges={<span className="ex-badge">{boss.tier}</span>}
+              sub={`${boss.platform} · ${boss.region}`}
+            />
+            <div className="ex-num">{boss.players}<small className="inline-flex items-center gap-1.5">{boss.inSession > 0 && <span className="ex-livedot" />}{boss.inSession} live</small></div>
+            <div className="ex-num">{money(boss.deposits)}</div>
+            <div className="ex-num">{money(boss.commission)}<small>{boss.commission_pct}% rate</small></div>
+            <ChipList items={boss.topGames.map((g) => g.name)} max={2} empty="none yet" />
+            <ChevronRight className="w-4 h-4 ex-chevron" />
+          </article>
+        ))}
+      </ListShell>
     </div>
   );
 }

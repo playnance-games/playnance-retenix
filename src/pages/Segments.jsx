@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { loadPlayersWithStatus } from '@/lib/playerData';
-import { Plus, Layers, Zap, Lightbulb, Trash2 } from "lucide-react";
+import { Plus, Layers, Zap, Lightbulb, Trash2, Pencil } from "lucide-react";
+import { ListShell, RowMain, ChipList, ListMessage } from "@/components/executive/ListParts";
+import { filterLabels } from "@/components/executive/CaseConditionTags";
 import FireSegmentDialog from "@/components/FireSegmentDialog";
 import Recommendations from "@/components/Recommendations";
 import { Button } from "@/components/ui/button";
@@ -13,8 +15,6 @@ import { matchSegment } from "@/lib/retenixLogic";
 import InfoTip from "@/components/InfoTip";
 import SegmentAiChat from "@/components/segments/SegmentAiChat";
 import FirstSegmentDialog from "@/components/segments/FirstSegmentDialog";
-import { tagClasses } from "@/lib/tagColors";
-
 const emptySeg = () => ({
   name: "",
   seg_key: "",
@@ -93,49 +93,38 @@ export default function Segments() {
           </div>
         </div>
       ) : (
-      <div className="ex-register-scroll">
-        <section className="ex-casegrid ex-seggrid" aria-label="Segments">
-          <div className="ex-gridhead"><div>Segment</div><div>Players</div><div>Assigned cases</div><div>Actions</div></div>
-          {loading ? <div className="p-6 text-sm text-muted-foreground">Loading segments…</div> : segments.map((s) => {
-            const assigned = (s.case_ids || []).map((id) => cases.find((c) => c.id === id)).filter(Boolean);
-            const filters = Object.entries(s.filters || {}).filter(([, v]) => v !== null && v !== "" && v !== undefined);
-            return (
-              <article key={s.id} className="ex-caserow">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Layers className="w-4 h-4 text-accent shrink-0" />
-                    <span className="ex-casename">{s.name}</span>
-                    {s.built_in && <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground">built-in</span>}
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-1.5 text-[10px]">
-                    {filters.map(([k, v]) => (
-                      <span key={k} className={`px-1.5 py-0.5 rounded border ${tagClasses(k)}`}>{k}: {String(v)}</span>
-                    ))}
-                    {filters.length === 0 && <span className="text-[11px] text-muted-foreground italic">no filters — matches all</span>}
-                  </div>
-                </div>
-                <div className="text-sm font-semibold tabular-nums">{count(s)}<span className="text-xs font-normal text-muted-foreground"> match</span></div>
-                <div className="min-w-0">
-                  {assigned.length ? (
-                    <div className="flex flex-wrap gap-1.5">
-                      {assigned.map((c) => (
-                        <span key={c.id} className={`px-2 py-0.5 rounded-full text-[11px] border ${c.status === "on" ? "border-accent/30 text-accent" : "border-border text-muted-foreground"}`}>{c.name}</span>
-                      ))}
-                    </div>
-                  ) : <span className="text-[11px] text-muted-foreground italic">no cases assigned</span>}
-                </div>
-                <div className="ex-rowtools ex-actions">
-                  <Button size="sm" onClick={() => setFireSeg(s)}><Zap className="w-3.5 h-3.5 mr-1" /> Fire</Button>
-                  <Button variant="outline" size="sm" onClick={() => { setEditing({ ...s }); setOpen(true); }}>Edit</Button>
-                  {!s.built_in && (
-                    <Button variant="ghost" size="sm" onClick={() => setDelSeg(s)} title="Delete segment" aria-label={`Delete ${s.name}`}><Trash2 className="w-3.5 h-3.5" /></Button>
-                  )}
-                </div>
-              </article>
-            );
-          })}
-        </section>
-      </div>
+      <ListShell
+        cols="minmax(240px,1.6fr) 110px minmax(200px,1.3fr) minmax(130px,.8fr) 168px"
+        minWidth={920}
+        label="Segments"
+        head={["Segment", "Players", "Who's in it", "Cases", { label: "Actions", right: true }]}
+      >
+        {loading ? <ListMessage>Loading segments…</ListMessage> : segments.map((s) => {
+          const assigned = (s.case_ids || []).map((id) => cases.find((c) => c.id === id)).filter(Boolean);
+          const filters = filterLabels(s.filters);
+          const matched = count(s);
+          return (
+            <article key={s.id} className="ex-row">
+              <RowMain
+                icon={<Layers />}
+                title={s.name}
+                badges={s.built_in && <span className="ex-badge">Built-in</span>}
+                sub={`${filters.length ? `${filters.length} ${filters.length === 1 ? "filter" : "filters"}` : "No filters"} · ${assigned.filter((c) => c.status === "on").length} live ${assigned.filter((c) => c.status === "on").length === 1 ? "case" : "cases"}`}
+              />
+              <div className="ex-num">{matched}<small>{players.length ? `${Math.round((matched / players.length) * 100)}% of players` : "players"}</small></div>
+              <ChipList items={filters} empty="Everyone" />
+              <div className="ex-num">{assigned.length || "—"}<small className="truncate" title={assigned.map((c) => c.name).join(", ")}>{assigned.length ? assigned[0].name + (assigned.length > 1 ? ` +${assigned.length - 1}` : "") : "no cases"}</small></div>
+              <div className="ex-rowactions">
+                <Button size="sm" onClick={() => setFireSeg(s)}><Zap className="w-3.5 h-3.5 mr-1" /> Fire</Button>
+                <button className="ex-iconbtn" onClick={() => { setEditing({ ...s }); setOpen(true); }} title="Edit segment" aria-label={`Edit ${s.name}`}><Pencil /></button>
+                {s.built_in
+                  ? <span className="w-[34px]" aria-hidden="true" />
+                  : <button className="ex-iconbtn" onClick={() => setDelSeg(s)} title="Delete segment" aria-label={`Delete ${s.name}`}><Trash2 /></button>}
+              </div>
+            </article>
+          );
+        })}
+      </ListShell>
       )}
 
       {editing && (
