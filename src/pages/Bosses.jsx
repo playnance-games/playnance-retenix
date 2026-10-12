@@ -2,14 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Crown, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { loadBossesWithStats, money } from "@/lib/bosses";
+import { loadBossesWithStats, money, TIER_CLASS } from "@/lib/bosses";
 import InfoTip from "@/components/InfoTip";
-
-const TIER_CLASS = {
-  Platinum: "bg-slate-900 text-white",
-  Gold: "bg-amber-100 text-amber-800",
-  Silver: "bg-slate-100 text-slate-700",
-};
 
 export default function Bosses() {
   const navigate = useNavigate();
@@ -26,7 +20,7 @@ export default function Bosses() {
           <Crown className="w-5 h-5 text-accent" />
           <h1 className="text-2xl font-heading font-semibold tracking-tight">Bosses</h1>
         </div>
-        <p className="text-sm text-muted-foreground mt-1">Each boss brings players to the site. Open a row for the full card.<InfoTip text="Stats roll up from the players a boss owns. House net is what the house is up on those players. Commission is the boss's share of that net win." /></p>
+        <p className="text-sm text-muted-foreground mt-1">Bosses own the platforms players play on. Open a row for the full card.<InfoTip text="A player can play on several bosses' platforms; each boss counts only the player's share of activity on their platform. House net is what the house is up on those players. Commission is the boss's share of that net win." /></p>
       </header>
       <div className="ex-register-scroll">
         <section className="ex-casegrid ex-bossgrid" aria-label="Bosses">
@@ -47,7 +41,7 @@ export default function Bosses() {
                   <span className="ex-casename">{boss.name}</span>
                   <span className={`text-[10px] font-semibold uppercase tracking-wide rounded px-2 py-0.5 ${TIER_CLASS[boss.tier] || "bg-muted"}`}>{boss.tier}</span>
                 </div>
-                <div className="ex-subline">{boss.region} · {boss.channel}</div>
+                <div className="ex-subline"><span className="font-medium text-foreground">{boss.platform}</span> · {boss.region} · {boss.channel}</div>
               </div>
               <div className="text-sm font-semibold tabular-nums">{boss.players}</div>
               <div className="text-sm font-semibold tabular-nums">{boss.inSession}</div>

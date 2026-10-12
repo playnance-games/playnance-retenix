@@ -40,6 +40,12 @@ export default function Layout() {
     try { localStorage.setItem("retenix-theme", light ? "light" : "dark"); } catch {}
   }, [light]);
 
+  useEffect(() => {
+    const playerPage = pathname.startsWith("/players") || pathname.startsWith("/live");
+    if (playerPage && mode !== "players") setMode("players");
+    if (pathname.startsWith("/bosses") && mode !== "bosses") setMode("bosses");
+  }, [pathname, mode, setMode]);
+
   const nav = mode === "bosses" ? BOSS_NAV : PLAYER_NAV;
   const changeMode = (next) => {
     if (next === mode) return;

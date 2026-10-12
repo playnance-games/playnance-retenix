@@ -1,25 +1,33 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { ArrowLeft, Radio, Wallet, Clock, Gamepad2, Tag } from "lucide-react";
+import { ArrowLeft, Radio, Wallet, Clock, Gamepad2, Tag, Globe, ArrowUpRight, Gauge, TrendingDown, TrendingUp, CalendarDays, Send, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import PlayerIdentity from "@/components/players/PlayerIdentity";
+import { Image } from "@/components/ui/image";
+import { LifecycleChip, NetChip, RiskChip } from "@/components/tags";
+import HoverTip from "@/components/HoverTip";
 import InfoTip from "@/components/InfoTip";
+import Stat from "@/components/StatTile";
 import FireCasePanel from "@/components/FireCasePanel";
 import { fmtMoney, scoreBreakdown, derivePlayerStatus } from "@/lib/retenixLogic";
+import { assessPlayerRisk } from "@/lib/playerStatus";
+import { platformsForPlayer, playerDeposits, TIER_CLASS } from "@/lib/bosses";
+
+const AVATAR = "https://media.base44.com/images/public/6aba0bdf07f37e4078b1455a/1e345eab9_generated_image.png";
+const FEATURES = ["staking", "streaming", "missions", "tournaments", "leaderboard", "g_coin"];
 
 const T = {
   lifecycle: "Lifecycle stage: new (just joined), active (regular), quiet (activity dropped), at-risk (near churn).",
   net: "Net vs house. Up = cash disabled, education only. Down = cash eligible (subject to caps). Too_thin = margin too small for cash.",
   risk: "Clean = no enabled, available risk signal crossed a threshold. Watch = review needed; no automatic reduction in gifts or frequency. Block offers = existing cash and survey restrictions. Missing inputs remain unevaluated.",
   score: "Retention score 1.00–10.00. Breakdown: sessions 25%, deposits 25%, wagering 20%, engagement proxy 15%, account age 15%. Contributions are calibrated to the stored score; net vs house is a separate cash gate.",
-  totalDep: "Lifetime sum of all deposits.",
+  totalDep: "Lifetime sum of all deposits, across every platform the player uses.",
   wagered: "Estimated total amount wagered across all sessions.",
   withdrawals: "Lifetime withdrawals.",
   bonus7d: "Total cash gifts allocated to this player during the current rolling 7-day window; not their deposits or spend.",
-  window: "Used means a cash gift has already been allocated in this rolling 7-day window; another cash gift is blocked until the window resets. Free means none has been allocated yet. This is tracked by bonus used (7d), not by deposits or withdrawals.",
-  netAmt: "Player's net position vs the house.",
-  tenure: "How long the player has been active on the platform.",
+  window: "Used means a cash gift has already been allocated in this rolling 7-day window; another cash gift is blocked until the window resets. Free means none has been allocated yet.",
+  netAmt: "Player's net position vs the house. Negative = the player is down.",
+  tenure: "How long the player has been active.",
   lifetimeSess: "Total sessions all-time.",
   lastSeen: "Most recent time the player was seen.",
   lastAction: "The last Retenix action taken: offer, education, or blocked.",
@@ -27,26 +35,25 @@ const T = {
   favSeen: "Games inferred from play when no stated favorites exist.",
   features: "Features with recorded usage appear as tags. Unused features can still be targeted by cases.",
   live: "Player is playing right now. Minutes vs their average session, and session deposit vs remaining balance.",
+  platforms: "Bosses own the platforms. Share is the part of this player's activity on each boss's platform; deposits and sessions are split by that share.",
 };
 
-function SectionTitle({ icon: Icon, children, tip }) {
+function Panel({ icon: Icon, title, tip, children, className = "" }) {
   return (
-    <div className="flex items-center gap-2 mb-3">
-      <span className="w-1 h-4 rounded-full accent-bar" />
-      {Icon && <Icon className="w-4 h-4 text-accent" />}
-      <h2 className="text-sm font-heading font-medium tracking-wide">{children}</h2>
-      {tip && <InfoTip text={tip} />}
-    </div>
+    <section className={`lux-surface rounded-2xl border border-border bg-card/40 p-5 ${className}`}>
+      <h2 className="text-sm font-heading font-medium tracking-wide mb-3 flex items-center gap-1.5">
+        {Icon && <Icon className="w-4 h-4 text-accent" />}{title}{tip && <InfoTip text={tip} />}
+      </h2>
+      {children}
+    </section>
   );
 }
 
 function Row({ label, children, tip }) {
   return (
-    <div className="flex items-center justify-between py-2.5 border-b border-border/50">
-      <span className="text-[12px] text-muted-foreground flex items-center gap-1">
-        {label}{tip && <InfoTip text={tip} />}
-      </span>
-      <span className="text-sm">{children}</span>
+    <div className="flex items-center justify-between gap-3 py-2.5 border-b border-border/50 last:border-0">
+      <dt className="text-xs text-muted-foreground flex items-center gap-1">{label}{tip && <InfoTip text={tip} />}</dt>
+      <dd className="text-sm font-semibold tabular-nums text-right">{children}</dd>
     </div>
   );
 }
@@ -58,6 +65,45 @@ const tenure = (first) => {
   if (days < 365) return `${Math.round(days / 30)}mo`;
   return `${(days / 365).toFixed(1)}y`;
 };
+
+function PlatformsPanel({ player }) {
+  const platforms = platformsForPlayer(player.player_id);
+  const deposits = playerDeposits(player);
+  return (
+    <Panel icon={Globe} title={`Plays on ${platforms.length} ${platforms.length === 1 ? "platform" : "platforms"}`} tip={T.platforms} className="mt-5">
+      {platforms.length === 0 ? <p className="text-sm text-muted-foreground">Not linked to any boss's platform.</p> : (
+        <div className="divide-y divide-border/60">
+          {platforms.map(({ boss, share, primary }) => (
+            <div key={boss.id} className="py-3 first:pt-0 last:pb-0 grid gap-3 items-center md:grid-cols-[minmax(0,1.4fr)_minmax(140px,1fr)_110px_110px_auto]">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center shrink-0"><Crown className="w-5 h-5" /></span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold">{boss.platform}</span>
+                    {primary && <span className="text-[10px] font-semibold uppercase tracking-wide rounded px-2 py-0.5 bg-accent text-accent-foreground">Main</span>}
+                  </div>
+                  <div className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
+                    Boss {boss.name}
+                    <span className={`text-[10px] font-semibold uppercase tracking-wide rounded px-1.5 py-0.5 ${TIER_CLASS[boss.tier] || "bg-muted"}`}>{boss.tier}</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-[11px] text-muted-foreground mb-1"><span>Share of play</span><span className="font-semibold text-foreground">{Math.round(share * 100)}%</span></div>
+                <div className="h-2 rounded-full bg-muted overflow-hidden"><div className="h-full rounded-full accent-bar" style={{ width: `${share * 100}%` }} /></div>
+              </div>
+              <div className="text-xs"><div className="text-muted-foreground">Deposits here</div><div className="font-semibold tabular-nums text-sm">{fmtMoney(deposits * share)}</div></div>
+              <div className="text-xs"><div className="text-muted-foreground">Sessions / wk</div><div className="font-semibold tabular-nums text-sm">{((player.sessions_per_week || 0) * share).toFixed(1)}</div></div>
+              <Button asChild variant="outline" size="sm" className="justify-self-start md:justify-self-end">
+                <Link to={`/bosses/${boss.id}`}>Boss card <ArrowUpRight className="w-3.5 h-3.5" /></Link>
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </Panel>
+  );
+}
 
 export default function PlayerCard() {
   const { id } = useParams();
@@ -85,11 +131,15 @@ export default function PlayerCard() {
   if (!player) return <div className="p-10 text-muted-foreground">Player not found.</div>;
 
   const ff = player.feature_flags || {};
+  const channels = player.channels || {};
   const breakdown = scoreBreakdown(player, settings);
+  const assessment = assessPlayerRisk(player, settings);
+  const usedFeatures = FEATURES.filter((f) => ff[f]);
+  const netTone = player.net_amount < 0 ? "text-red-600" : player.net_amount > 0 ? "text-emerald-600" : "";
 
   return (
     <div className="ex-page ex-player-profile flex flex-col">
-      <Button variant="outline" size="sm" onClick={() => navigate("/players")} className="mb-4">
+      <Button variant="outline" size="sm" onClick={() => navigate("/players")} className="mb-4 self-start">
         <ArrowLeft className="w-4 h-4 mr-1" /> Back to players list
       </Button>
 
@@ -107,72 +157,111 @@ export default function PlayerCard() {
         </div>
       )}
 
-      <div className="grid md:grid-cols-3 gap-5">
-        <PlayerIdentity player={player} tips={T} settings={settings} />
-
-        {/* Middle: lifetime & activity (swapped with favorites) */}
-        <div className="lux-surface rounded-2xl border border-border bg-card/40 p-5">
-          <SectionTitle icon={Clock} tip="Tenure and session activity over the player's lifetime.">Lifetime & activity</SectionTitle>
-          <Row label="First seen (tenure)" tip={T.tenure}>{tenure(player.first_seen)}</Row>
-          <Row label="Lifetime sessions" tip={T.lifetimeSess}>{player.lifetime_sessions ?? "—"}</Row>
-          <Row label="Sessions / week">{player.sessions_per_week}</Row>
-          <Row label="Avg session">{player.avg_session_minutes}m</Row>
-          <Row label="Last seen" tip={T.lastSeen}>{new Date(player.last_seen).toLocaleString()}</Row>
-          <Row label="Last Retenix action" tip={T.lastAction}>
-            {player.last_retenix_action ? (
-              <span className={`text-[11px] px-2 py-0.5 rounded-full border ${
-                player.last_retenix_action === "blocked" ? "border-destructive/30 text-destructive" :
-                player.last_retenix_action === "education" ? "border-sky-500/30 text-sky-300" :
-                "border-accent/30 text-accent"
-              }`}>{player.last_retenix_action}</span>
-            ) : <span className="text-[11px] text-muted-foreground">—</span>}
-          </Row>
+      <section className="lux-surface rounded-2xl border border-border bg-card p-5">
+        <div className="flex items-start gap-4">
+          <Image src={AVATAR} alt={`Avatar for ${player.name}`} className="w-16 h-16 rounded-2xl shrink-0 overflow-hidden" />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-2xl font-heading font-semibold tracking-tight">{player.name}</h1>
+              <HoverTip text={T.lifecycle}><LifecycleChip v={player.lifecycle} /></HoverTip>
+              <HoverTip text={T.net}><NetChip v={player.net_vs_house} amount={player.net_amount} /></HoverTip>
+              <HoverTip text={T.risk}><RiskChip v={player.risk} /></HoverTip>
+            </div>
+            <div className="mt-2 flex items-center gap-3 flex-wrap text-sm text-muted-foreground">
+              <span className="font-mono text-xs">{player.player_id}</span>
+              <span className="inline-flex items-center gap-1"><Gamepad2 className="w-4 h-4" />{player.favorite_category || "no category"}</span>
+              <span className="inline-flex items-center gap-1"><Globe className="w-4 h-4" />{platformsForPlayer(player.player_id).map((m) => m.boss.platform).join(", ") || "no platform"}</span>
+              <span className="inline-flex items-center gap-1"><CalendarDays className="w-4 h-4" />Last seen {new Date(player.last_seen).toLocaleDateString()}</span>
+            </div>
+            {!!assessment.reasons.length && <p className="mt-2 text-xs font-medium">{assessment.reasons.map((r) => r.label).join("; ")}</p>}
+            {!!assessment.missing.length && <p className="mt-1 text-[11px] text-muted-foreground">Incomplete risk data<InfoTip text={`Not evaluated: ${assessment.missing.join(", ")}. Clean means no available signal triggered, not that all risks were ruled out.`} /></p>}
+          </div>
         </div>
-
-        {/* Right: money (expanded) */}
-        <div className="lux-surface rounded-2xl border border-border bg-card/40 p-5">
-          <SectionTitle icon={Wallet} tip="Lifetime money: deposits, withdrawals, wagered, and the 7-day cash window.">Money</SectionTitle>
-          <Row label="Total deposits" tip={T.totalDep}>{fmtMoney(player.total_deposits)}</Row>
-          <Row label="Deposit count">{player.deposit_count}</Row>
-          <Row label="Average deposit">{fmtMoney(player.avg_deposit)}</Row>
-          <Row label="Last deposit">{fmtMoney(player.last_deposit)}</Row>
-          <Row label="Withdrawals" tip={T.withdrawals}>{fmtMoney(player.withdrawals)}</Row>
-          <Row label="Total wagered" tip={T.wagered}>{fmtMoney(player.total_wagered)}</Row>
-          <Row label="Bonus used (7d)" tip={T.bonus7d}>
-            <span className="text-foreground font-medium">{fmtMoney(player.bonus_budget_used_7d)}</span>
-          </Row>
-          <Row label="Cash window" tip={T.window}>
-            <span className="text-foreground font-medium">{player.bonus_budget_used_7d > 0 ? "Used" : "Free"}</span>
-          </Row>
-          <Row label="Net vs house $" tip={T.netAmt}>
-            <span className={player.net_vs_house === "up" ? "text-accent" : player.net_vs_house === "down" ? "text-destructive" : "text-muted-foreground"}>
-              {fmtMoney(player.net_amount)}
-            </span>
-          </Row>
+        <div className="mt-5 grid grid-cols-2 lg:grid-cols-4 gap-2">
+          <Stat icon={Gauge} label="Score" value={`${Number(player.score).toFixed(2)} / 10`} hint={T.score} />
+          <Stat icon={Wallet} label="Total deposits" value={fmtMoney(playerDeposits(player))} hint={T.totalDep} />
+          <Stat icon={player.net_amount < 0 ? TrendingDown : TrendingUp} label="Net vs house" value={fmtMoney(player.net_amount)} hint={T.netAmt} tone={netTone} />
+          <Stat icon={Clock} label="Sessions / week" value={player.sessions_per_week ?? "—"} />
         </div>
+      </section>
+
+      <PlatformsPanel player={player} />
+
+      <div className="grid lg:grid-cols-2 gap-5 mt-5">
+        <Panel icon={Clock} title="Lifetime & activity" tip="Tenure and session activity over the player's lifetime.">
+          <dl>
+            <Row label="First seen (tenure)" tip={T.tenure}>{tenure(player.first_seen)}</Row>
+            <Row label="Lifetime sessions" tip={T.lifetimeSess}>{player.lifetime_sessions ?? "—"}</Row>
+            <Row label="Sessions / week">{player.sessions_per_week}</Row>
+            <Row label="Avg session">{player.avg_session_minutes}m</Row>
+            <Row label="Last seen" tip={T.lastSeen}>{new Date(player.last_seen).toLocaleString()}</Row>
+            <Row label="Last Retenix action" tip={T.lastAction}>
+              {player.last_retenix_action ? (
+                <span className={`text-[11px] px-2 py-0.5 rounded-full border ${player.last_retenix_action === "blocked" ? "border-destructive/30 text-destructive" : "border-accent/30 text-accent"}`}>{player.last_retenix_action}</span>
+              ) : "—"}
+            </Row>
+          </dl>
+        </Panel>
+
+        <Panel icon={Wallet} title="Money" tip="Lifetime money: deposits, withdrawals, wagered, and the 7-day cash window.">
+          <dl>
+            <Row label="Deposit count">{player.deposit_count}</Row>
+            <Row label="Average deposit">{fmtMoney(player.avg_deposit)}</Row>
+            <Row label="Last deposit">{fmtMoney(player.last_deposit)}</Row>
+            <Row label="Withdrawals" tip={T.withdrawals}>{fmtMoney(player.withdrawals)}</Row>
+            <Row label="Total wagered" tip={T.wagered}>{fmtMoney(player.total_wagered)}</Row>
+            <Row label="Bonus used (7d)" tip={T.bonus7d}>{fmtMoney(player.bonus_budget_used_7d)}</Row>
+            <Row label="Cash window" tip={T.window}>{player.bonus_budget_used_7d > 0 ? "Used" : "Free"}</Row>
+          </dl>
+        </Panel>
       </div>
 
-      <div className="lux-surface rounded-2xl border border-border bg-card/40 p-5 mt-5 order-last">
-        <SectionTitle tip={T.score}>How this score was calculated</SectionTitle>
+      <div className="grid lg:grid-cols-2 gap-5 mt-5">
+        <Panel icon={Gamepad2} title="What they play" tip={T.favStated}>
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5">Stated favorites</div>
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {(player.favorites_stated || []).length
+              ? player.favorites_stated.map((g) => <span key={g} className="rounded-full border border-accent/30 text-accent px-2.5 py-0.5 text-xs font-medium">{g}</span>)
+              : <span className="text-xs text-muted-foreground italic">none — survey eligible</span>}
+          </div>
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1">Seen in play<InfoTip text={T.favSeen} /></div>
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {(player.favorites_seen || []).length
+              ? player.favorites_seen.map((g) => <span key={g} className="rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">{g}</span>)
+              : <span className="text-xs text-muted-foreground italic">nothing recorded</span>}
+          </div>
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1"><Tag className="w-3.5 h-3.5" />Features used<InfoTip text={T.features} /></div>
+          <div className="flex flex-wrap gap-1.5">
+            {usedFeatures.length
+              ? usedFeatures.map((f) => <span key={f} className="rounded-full border border-primary/20 bg-primary/10 text-primary px-2.5 py-0.5 text-xs capitalize">{f.replace("_", " ")}</span>)
+              : <span className="text-xs text-muted-foreground italic">No feature usage recorded.</span>}
+          </div>
+        </Panel>
+
+        <Panel icon={Send} title="Channels" tip="Connected delivery channels. Unavailable channels are not connected.">
+          <dl>
+            {["site", "telegram", "whatsapp", "email"].map((channel) => (
+              <Row key={channel} label={<span className="capitalize">{channel}</span>}>
+                <span className={channels[channel] ? "text-emerald-600" : "text-muted-foreground font-normal"}>{channels[channel] ? "Connected" : "Unavailable"}</span>
+              </Row>
+            ))}
+          </dl>
+        </Panel>
+      </div>
+
+      <Panel title="How this score was calculated" tip={T.score} className="mt-5">
         <p className="text-xs text-muted-foreground mb-4">
-          <span className="text-foreground font-medium">{Number(player.score).toFixed(2)}</span> / 10.00 = sum of (raw signal / 10 × weight × 10 × calibration factor). These estimated signals are calibrated to the stored score, not independently measured as a live score. Engagement is an illustrative proxy, not measured case responses. Net vs house is a separate cash gate.
+          <span className="text-foreground font-medium">{Number(player.score).toFixed(2)}</span> / 10.00 = sum of (raw signal / 10 × weight × 10 × calibration factor). These estimated signals are calibrated to the stored score, not independently measured. Net vs house is a separate cash gate.
         </p>
-        <div className="space-y-3.5 max-w-2xl">
+        <div className="space-y-3.5 max-w-3xl">
           {breakdown.map((c) => (
             <div key={c.key}>
               <div className="flex justify-between items-center text-xs mb-1.5 gap-3">
-                <span className="text-muted-foreground min-w-0">
+                <span className="min-w-0">
                   <span className="text-foreground font-medium">{c.label}</span>
-                  <span className="block text-[10px] opacity-75 mt-0.5">Input: {c.input} → {c.raw.toFixed(4)}/10 × {c.weight}% × {c.scale.toFixed(4)} calibration = +{c.contribution.toFixed(2)}</span>
+                  <span className="block text-[10px] text-muted-foreground mt-0.5">Input: {c.input} → {c.raw.toFixed(2)}/10 × {c.weight}%</span>
                 </span>
-                <span className="flex items-center gap-1.5 shrink-0">
-                  <span className="font-mono text-[11px] text-muted-foreground">raw</span>
-                  <span className="font-mono text-foreground font-semibold rounded-lg bg-muted/60 border border-border px-2 py-1">{c.raw.toFixed(2)} / 10</span>
-                  <span className="font-mono text-[11px] text-muted-foreground">weight</span>
-                  <span className="font-mono text-foreground font-semibold rounded-lg bg-muted/60 border border-border px-2 py-1">{c.weight}%</span>
-                  <span className="font-mono text-[11px] text-muted-foreground">→</span>
-                  <span className="font-mono text-foreground font-semibold rounded-lg bg-accent/10 border border-accent/20 px-2 py-1">+{c.contribution.toFixed(2)}</span>
-                </span>
+                <span className="font-mono text-foreground font-semibold rounded-lg bg-accent/10 border border-accent/20 px-2 py-1 shrink-0">+{c.contribution.toFixed(2)}</span>
               </div>
               <div className="h-2 rounded-full bg-muted/50 overflow-hidden">
                 <div className="h-full rounded-full accent-bar" style={{ width: `${(c.raw / 10) * 100}%` }} />
@@ -180,62 +269,29 @@ export default function PlayerCard() {
             </div>
           ))}
         </div>
-        <div className="mt-4 pt-3 border-t border-border/50 flex justify-between text-xs max-w-2xl">
+        <div className="mt-4 pt-3 border-t border-border/50 flex justify-between text-xs max-w-3xl">
           <span className="text-muted-foreground">Total retention score</span>
           <span className="font-mono font-semibold">{breakdown.reduce((a, c) => a + c.contribution, 0).toFixed(2)} / 10.00</span>
         </div>
-      </div>
+      </Panel>
 
-      {/* Second row: favorites + features (swapped with lifetime) + timeline */}
-      <div className="grid md:grid-cols-3 gap-5 mt-5">
-        <div className="lux-surface rounded-2xl border border-border bg-card/40 p-5">
-          <SectionTitle icon={Gamepad2} tip={T.favStated}>Favorites</SectionTitle>
-          <div className="text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">Stated <InfoTip text={T.favStated} /></div>
-          <div className="flex flex-wrap gap-1.5 mt-1 mb-3">
-            {(player.favorites_stated || []).length ? (player.favorites_stated || []).map((g) => (
-              <span key={g} className="inline-flex items-center rounded-md bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent border border-accent/25">{g}</span>
-            )) : <span className="text-[11px] text-muted-foreground italic">none — survey eligible</span>}
-          </div>
-          <div className="text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">Seen <InfoTip text={T.favSeen} /></div>
-          <div className="flex flex-wrap gap-1.5 mt-1">
-            {(player.favorites_seen || []).map((g) => (
-              <span key={g} className="inline-flex items-center rounded-md bg-muted px-3 py-1.5 text-xs text-muted-foreground border border-border">{g}</span>
-            ))}
-          </div>
-
-          <div className="mt-6">
-            <SectionTitle icon={Tag} tip={T.features}>Features used</SectionTitle>
-            <div className="flex flex-wrap gap-2">
-              {["staking", "streaming", "missions", "tournaments", "leaderboard", "g_coin"].filter(feat => ff[feat]).map(feat => (
-                <span key={feat} className="rounded-md border border-primary/20 bg-primary/10 text-primary px-3 py-1.5 text-xs capitalize">{feat.replace("_", " ")}</span>
-              ))}
-              {!["staking", "streaming", "missions", "tournaments", "leaderboard", "g_coin"].some(feat => ff[feat]) && <span className="text-xs text-muted-foreground">No feature usage recorded.</span>}
-            </div>
-          </div>
-        </div>
-
-        <div className="md:col-span-2 lux-surface rounded-2xl border border-border bg-card/40 p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-1 h-4 rounded-full bg-muted-foreground/40" />
-            <h2 className="text-sm font-heading font-medium tracking-wide text-muted-foreground">Timeline</h2>
-          </div>
-          <div className="space-y-3 max-h-[320px] overflow-auto pr-2">
-            {events.length === 0 && <p className="text-sm text-muted-foreground">No events yet.</p>}
-            {events.map((e) => (
-              <div key={e.id} className="flex gap-3">
-                <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${e.kind === "retenix_action" ? "bg-foreground/70" : "bg-muted-foreground/50"}`} />
-                <div className="flex-1">
-                  <div className="text-sm">{e.description}</div>
-                  <div className="text-[11px] text-muted-foreground">{new Date(e.timestamp).toLocaleString()}</div>
-                </div>
-                <span className={`text-[10px] uppercase tracking-wider ${e.kind === "retenix_action" ? "text-foreground/70" : "text-muted-foreground"}`}>{e.kind}</span>
+      <Panel title="Timeline" className="mt-5">
+        <div className="space-y-3 max-h-[320px] overflow-auto pr-2">
+          {events.length === 0 && <p className="text-sm text-muted-foreground">No events yet.</p>}
+          {events.map((e) => (
+            <div key={e.id} className="flex gap-3">
+              <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${e.kind === "retenix_action" ? "bg-accent" : "bg-muted-foreground/50"}`} />
+              <div className="flex-1">
+                <div className="text-sm">{e.description}</div>
+                <div className="text-[11px] text-muted-foreground">{new Date(e.timestamp).toLocaleString()}</div>
               </div>
-            ))}
-          </div>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{e.kind}</span>
+            </div>
+          ))}
         </div>
-      </div>
+      </Panel>
 
-      <div className="order-last"><FireCasePanel player={player} onFired={load} /></div>
+      <div className="mt-5"><FireCasePanel player={player} onFired={load} /></div>
     </div>
   );
 }

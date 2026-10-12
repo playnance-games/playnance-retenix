@@ -1,27 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { ArrowLeft, Crown, MapPin, Megaphone, Radio, Users, Gamepad2, Wallet, TrendingUp, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, Crown, MapPin, Megaphone, Radio, Users, Gamepad2, Wallet, TrendingUp, ArrowUpRight, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LifecycleChip, RiskChip } from "@/components/tags";
-import InfoTip from "@/components/InfoTip";
-import { loadBossWithStats, money } from "@/lib/bosses";
-
-const TIER_CLASS = {
-  Platinum: "bg-slate-900 text-white",
-  Gold: "bg-amber-100 text-amber-800",
-  Silver: "bg-slate-100 text-slate-700",
-};
-
-function Stat({ icon: Icon, label, value, hint }) {
-  return (
-    <div className="rounded-lg border border-border bg-muted/40 px-3 py-2.5">
-      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-        <Icon className="w-3.5 h-3.5 text-accent" />{label}{hint && <InfoTip text={hint} />}
-      </div>
-      <div className="mt-1 text-lg font-semibold tabular-nums">{value}</div>
-    </div>
-  );
-}
+import Stat from "@/components/StatTile";
+import { loadBossWithStats, money, TIER_CLASS } from "@/lib/bosses";
 
 export default function BossCard() {
   const { id } = useParams();
@@ -60,6 +43,7 @@ export default function BossCard() {
               <span className={`text-[10px] font-semibold uppercase tracking-wide rounded px-2 py-0.5 ${TIER_CLASS[boss.tier] || "bg-muted"}`}>{boss.tier}</span>
             </div>
             <div className="mt-2 flex items-center gap-3 flex-wrap text-sm text-muted-foreground">
+              <span className="inline-flex items-center gap-1 font-medium text-foreground"><Globe className="w-4 h-4 text-accent" />{boss.platform}</span>
               <span className="inline-flex items-center gap-1"><MapPin className="w-4 h-4" />{boss.region}</span>
               <span className="inline-flex items-center gap-1"><Megaphone className="w-4 h-4" />{boss.channel}</span>
               <span className="inline-flex items-center gap-1"><Crown className="w-4 h-4" />{boss.commission_pct}% commission</span>
@@ -68,9 +52,9 @@ export default function BossCard() {
           </div>
         </div>
         <div className="mt-5 grid grid-cols-2 lg:grid-cols-4 gap-2">
-          <Stat icon={Users} label="Players" value={boss.players} />
+          <Stat icon={Users} label="Players" value={boss.players} hint={`${boss.mainPlayers} play mainly on ${boss.platform}; the rest split their play with other bosses' platforms.`} />
           <Stat icon={Radio} label="Live now" value={boss.inSession} />
-          <Stat icon={Wallet} label="Deposits" value={money(boss.deposits)} hint="Total deposits from this boss's players (deposit count × average deposit)." />
+          <Stat icon={Wallet} label="Deposits" value={money(boss.deposits)} hint={`Deposits made on ${boss.platform}. For players who also play elsewhere, only their share here is counted.`} />
           <Stat icon={TrendingUp} label="Commission" value={money(boss.commission)} hint={`${boss.commission_pct}% of the house's net win on this boss's players.`} />
         </div>
       </section>
@@ -117,12 +101,14 @@ export default function BossCard() {
       </div>
 
       <section className="lux-surface rounded-2xl border border-border bg-card/40 p-5 mt-5">
-        <h2 className="text-sm font-heading font-medium tracking-wide mb-3">Players this boss owns</h2>
+        <h2 className="text-sm font-heading font-medium tracking-wide mb-1">Players on {boss.platform}</h2>
+        <p className="text-xs text-muted-foreground mb-3">Opening a player card switches to Players mode.</p>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-sm">
+          <table className="w-full min-w-[700px] text-sm">
             <thead>
               <tr className="text-left text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
                 <th className="py-2 pr-4 font-semibold">Player</th>
+                <th className="py-2 pr-4 font-semibold">Play here</th>
                 <th className="py-2 pr-4 font-semibold">Score</th>
                 <th className="py-2 pr-4 font-semibold">Lifecycle</th>
                 <th className="py-2 pr-4 font-semibold">Risk</th>
@@ -131,11 +117,15 @@ export default function BossCard() {
               </tr>
             </thead>
             <tbody>
-              {boss.roster.map((player) => (
+              {boss.roster.map(({ player, share, primary }) => (
                 <tr key={player.id} className="border-b border-border/60 last:border-0">
                   <td className="py-2.5 pr-4">
                     <div className="font-medium">{player.name}</div>
                     <div className="text-[11px] text-muted-foreground font-mono">{player.player_id}{player.in_session ? " · live" : ""}</div>
+                  </td>
+                  <td className="py-2.5 pr-4 text-xs">
+                    <span className="font-semibold tabular-nums">{Math.round(share * 100)}%</span>
+                    <span className="text-muted-foreground"> {primary ? "· main platform" : "· also plays elsewhere"}</span>
                   </td>
                   <td className="py-2.5 pr-4 tabular-nums font-semibold">{Number(player.score).toFixed(2)}</td>
                   <td className="py-2.5 pr-4"><LifecycleChip v={player.lifecycle} /></td>

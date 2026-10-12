@@ -17,10 +17,11 @@ const BOSS_STATS = [
 
 function bossValues(bosses) {
   const top = [...bosses].sort((a, b) => b.deposits - a.deposits)[0];
+  const unique = new Map(bosses.flatMap((b) => b.roster.map((m) => [m.player.id, m.player])));
   return {
     bosses: bosses.length,
-    players: bosses.reduce((n, b) => n + b.players, 0),
-    live: bosses.reduce((n, b) => n + b.inSession, 0),
+    players: unique.size,
+    live: [...unique.values()].filter((p) => p.in_session).length,
     top: top ? top.name.split(" ")[0] : "—",
     deposits: money(bosses.reduce((n, b) => n + b.deposits, 0)),
     commission: money(bosses.reduce((n, b) => n + b.commission, 0)),
