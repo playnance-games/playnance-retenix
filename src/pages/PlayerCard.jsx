@@ -4,9 +4,6 @@ import { base44 } from "@/api/base44Client";
 import { ArrowLeft, Radio, Wallet, Clock, Gamepad2, Tag, Globe, ArrowUpRight, Gauge, TrendingDown, TrendingUp, CalendarDays, Send, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
-import { RiskChip } from "@/components/tags";
-import { riskLevelOf } from "@/lib/riskLevels";
-import HoverTip from "@/components/HoverTip";
 import InfoTip from "@/components/InfoTip";
 import Stat from "@/components/StatTile";
 import FireCasePanel from "@/components/FireCasePanel";
@@ -19,8 +16,7 @@ const FEATURES = ["staking", "streaming", "missions", "tournaments", "leaderboar
 
 const T = {
   net: "Net vs house. Up = cash disabled, education only. Down = cash eligible (subject to caps). Too_thin = margin too small for cash.",
-  risk: "Five risk levels, from Low (green) to Severe (red). The level rises when a player has been away longer, plays less often, or their score is lower.",
-  score: "Retention score 1.00–10.00. Breakdown: sessions 25%, deposits 25%, wagering 20%, engagement proxy 15%, account age 15%. Contributions are calibrated to the stored score; net vs house is a separate cash gate.",
+  score: "Retention score 1.00–10.00. Fixed weights: risk 40%, high roller 40%, engagement 10%, lifetime 10%. Contributions are calibrated to the stored score.",
   totalDep: "Lifetime sum of all deposits, across every platform the player uses.",
   wagered: "Estimated total amount wagered across all sessions.",
   withdrawals: "Lifetime withdrawals.",
@@ -134,7 +130,6 @@ export default function PlayerCard() {
   const channels = player.channels || {};
   const breakdown = scoreBreakdown(player, settings);
   const assessment = assessPlayerRisk(player, settings);
-  const risk = riskLevelOf(player);
   const usedFeatures = FEATURES.filter((f) => ff[f]);
   const netTone = player.net_amount < 0 ? "text-red-600" : player.net_amount > 0 ? "text-emerald-600" : "";
 
@@ -162,10 +157,7 @@ export default function PlayerCard() {
         <div className="flex items-start gap-4">
           <Image src={AVATAR} alt={`Avatar for ${player.name}`} className="w-16 h-16 rounded-2xl shrink-0 overflow-hidden" />
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl font-heading font-semibold tracking-tight">{player.name}</h1>
-              <HoverTip text={T.risk}><RiskChip level={risk.level} /></HoverTip>
-            </div>
+            <h1 className="text-2xl font-heading font-semibold tracking-tight">{player.name}</h1>
             <div className="mt-2 flex items-center gap-3 flex-wrap text-sm text-muted-foreground">
               <span className="font-mono text-xs">{player.player_id}</span>
               <span className="inline-flex items-center gap-1"><Gamepad2 className="w-4 h-4" />{player.favorite_category || "no category"}</span>

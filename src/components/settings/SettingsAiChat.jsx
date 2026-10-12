@@ -6,9 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 const opener = (allowCash) => ({
   role: "assistant",
   content: allowCash
-    ? "What would you like to change? I can adjust the cash gift (haircut, ceiling, window) and the score weights."
-    : "What would you like to change? I can adjust the score weights. Cash gifts are a Players-mode setting.",
-  options: allowCash ? ["Change the cash gift", "Rebalance the score weights"] : ["Rebalance the score weights"],
+    ? "What would you like to change in the cash gift? I can adjust the haircut, the per-gift ceiling, and how many days between gifts."
+    : "Score weights are fixed: Risk 40%, High roller 40%, Engagement 10%, Lifetime 10%. Cash gifts are a Players-mode setting.",
+  options: allowCash ? ["Raise the haircut", "Lower the ceiling", "Change the cash window"] : [],
 });
 
 export default function SettingsAiChat({ settings, onApply, allowCash = true }) {

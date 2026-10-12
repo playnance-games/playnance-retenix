@@ -61,7 +61,7 @@
       "education_caps": { "per_session": 1, "per_week": 2 },
       "quiet_hours_default": { "start": "02:00", "end": "07:00" },
       "feature_list": ["staking", "daily mission", "tournaments", "streaming", "sports book how-it-works", "leaderboard", "G Coin"],
-      "score_weights": { "presence": 30, "deposit_rhythm": 25, "tenure": 15, "preference": 15, "response": 15 }
+      "score_weights": { "risk": 40, "high_roller": 40, "engagement": 10, "lifetime": 10 }
     }
   ],
   "events": [

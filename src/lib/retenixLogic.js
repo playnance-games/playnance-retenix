@@ -1,5 +1,6 @@
 // Retenix product-rule engine (mock logic, display + gate evaluation)
 import { derivePlayerStatus } from '@/lib/playerStatus';
+import { riskLevelOf } from '@/lib/riskLevels';
 export { derivePlayerStatus } from '@/lib/playerStatus';
 
 export const LIFECYCLES = ["new", "active", "quiet", "at-risk"];
@@ -136,7 +137,20 @@ export function bestCaseForPlayer(player, cases, settings, segments) {
 }
 
 
+export const FIXED_SCORE_WEIGHTS = { risk: 40, high_roller: 40, engagement: 10, lifetime: 10 };
+
+export const SCORE_WEIGHT_DEFS = [
+  { key: "risk", label: "Risk", value: 40, desc: "Lower risk scores higher. Low is 10 out of 10, Severe is 2." },
+  { key: "high_roller", label: "High roller", value: 40, desc: "Average deposit size. Larger deposits score higher." },
+  { key: "engagement", label: "Engagement", value: 10, desc: "How often they play, from sessions per week." },
+  { key: "lifetime", label: "Lifetime", value: 10, desc: "How established the account is, from lifetime deposit count." },
+];
+
 export const SCORE_LABELS = {
+  risk: "Risk",
+  high_roller: "High roller",
+  engagement: "Engagement",
+  lifetime: "Lifetime",
   presence: "Presence & sessions",
   sessions: "Presence & sessions",
   deposit_rhythm: "Deposit rhythm",
@@ -145,11 +159,22 @@ export const SCORE_LABELS = {
   age: "Account tenure",
   preference: "Preference declaration",
   response: "Response & engagement",
-  engagement: "Response & engagement",
   wagering: "Wagering levels",
 };
 
 const SIGNALS = {
+  risk: {
+    calc: (p) => (6 - riskLevelOf(p).level) * 2,
+    input: (p) => `${riskLevelOf(p).word} (level ${riskLevelOf(p).level} of 5) → ${(6 - riskLevelOf(p).level) * 2}/10`,
+  },
+  high_roller: {
+    calc: (p) => Math.min(10, ((Number(p.avg_deposit) || 0) / 140) * 10),
+    input: (p) => `$${Number(p.avg_deposit) || 0} average deposit ÷ $140 × 10`,
+  },
+  lifetime: {
+    calc: (p) => Math.min(10, ((Number(p.deposit_count) || 0) / 25) * 10),
+    input: (p) => `${Number(p.deposit_count) || 0} lifetime deposits ÷ 25 × 10`,
+  },
   presence: {
     calc: (p) => Math.min(10, ((p.sessions_per_week || 0) / 5) * 10),
     input: (p) => `${p.sessions_per_week || 0} sessions/week ÷ 5 × 10`,
@@ -183,8 +208,8 @@ const SIGNALS = {
     input: () => "Illustrative account-ID proxy (no response data)",
   },
   engagement: {
-    calc: (p) => Math.min(10, 3 + (((p.player_id || "x").split("").reduce((a, c) => a + c.charCodeAt(0), 0)) % 70) / 10),
-    input: () => "Illustrative account-ID proxy (no response data)",
+    calc: (p) => Math.min(10, ((Number(p.sessions_per_week) || 0) / 8) * 10),
+    input: (p) => `${Number(p.sessions_per_week) || 0} sessions/week ÷ 8 × 10`,
   },
   wagering: {
     calc: (p, ctx) => Math.min(10, (ctx.wagered / (ctx.totalDep * 4 || 1)) * 10),
@@ -193,8 +218,8 @@ const SIGNALS = {
 };
 
 // Derive a per-signal breakdown that sums to the player's retention score.
-export function scoreBreakdown(player, settings) {
-  const w = settings?.score_weights || { presence: 30, deposit_rhythm: 25, tenure: 15, preference: 15, response: 15 };
+export function scoreBreakdown(player) {
+  const w = FIXED_SCORE_WEIGHTS;
   const ctx = {
     tenureDays: player.first_seen ? Math.max(1, (Date.now() - new Date(player.first_seen).getTime()) / 864e5) : 1,
     deposits: player.deposit_count || 0,
