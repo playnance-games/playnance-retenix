@@ -4,7 +4,8 @@ import { base44 } from "@/api/base44Client";
 import { ArrowLeft, Radio, Wallet, Clock, Gamepad2, Tag, Globe, ArrowUpRight, Gauge, TrendingDown, TrendingUp, CalendarDays, Send, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
-import { LifecycleChip, NetChip, RiskChip } from "@/components/tags";
+import { RiskChip } from "@/components/tags";
+import { riskLevelOf } from "@/lib/riskLevels";
 import HoverTip from "@/components/HoverTip";
 import InfoTip from "@/components/InfoTip";
 import Stat from "@/components/StatTile";
@@ -17,9 +18,8 @@ const AVATAR = "https://media.base44.com/images/public/6aba0bdf07f37e4078b1455a/
 const FEATURES = ["staking", "streaming", "missions", "tournaments", "leaderboard", "g_coin"];
 
 const T = {
-  lifecycle: "Lifecycle stage: new (just joined), active (regular), quiet (activity dropped), at-risk (near churn).",
   net: "Net vs house. Up = cash disabled, education only. Down = cash eligible (subject to caps). Too_thin = margin too small for cash.",
-  risk: "Clean = no enabled, available risk signal crossed a threshold. Watch = review needed; no automatic reduction in gifts or frequency. Block offers = existing cash and survey restrictions. Missing inputs remain unevaluated.",
+  risk: "Five risk levels, from Low (green) to Severe (red). The level rises when a player has been away longer, plays less often, or their score is lower.",
   score: "Retention score 1.00–10.00. Breakdown: sessions 25%, deposits 25%, wagering 20%, engagement proxy 15%, account age 15%. Contributions are calibrated to the stored score; net vs house is a separate cash gate.",
   totalDep: "Lifetime sum of all deposits, across every platform the player uses.",
   wagered: "Estimated total amount wagered across all sessions.",
@@ -134,6 +134,7 @@ export default function PlayerCard() {
   const channels = player.channels || {};
   const breakdown = scoreBreakdown(player, settings);
   const assessment = assessPlayerRisk(player, settings);
+  const risk = riskLevelOf(player);
   const usedFeatures = FEATURES.filter((f) => ff[f]);
   const netTone = player.net_amount < 0 ? "text-red-600" : player.net_amount > 0 ? "text-emerald-600" : "";
 
@@ -163,9 +164,7 @@ export default function PlayerCard() {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl font-heading font-semibold tracking-tight">{player.name}</h1>
-              <HoverTip text={T.lifecycle}><LifecycleChip v={player.lifecycle} /></HoverTip>
-              <HoverTip text={T.net}><NetChip v={player.net_vs_house} amount={player.net_amount} /></HoverTip>
-              <HoverTip text={T.risk}><RiskChip v={player.risk} /></HoverTip>
+              <HoverTip text={T.risk}><RiskChip level={risk.level} /></HoverTip>
             </div>
             <div className="mt-2 flex items-center gap-3 flex-wrap text-sm text-muted-foreground">
               <span className="font-mono text-xs">{player.player_id}</span>
@@ -174,7 +173,7 @@ export default function PlayerCard() {
               <span className="inline-flex items-center gap-1"><CalendarDays className="w-4 h-4" />Last seen {new Date(player.last_seen).toLocaleDateString()}</span>
             </div>
             {!!assessment.reasons.length && <p className="mt-2 text-xs font-medium">{assessment.reasons.map((r) => r.label).join("; ")}</p>}
-            {!!assessment.missing.length && <p className="mt-1 text-[11px] text-muted-foreground">Incomplete risk data<InfoTip text={`Not evaluated: ${assessment.missing.join(", ")}. Clean means no available signal triggered, not that all risks were ruled out.`} /></p>}
+            {!!assessment.missing.length && <p className="mt-1 text-[11px] text-muted-foreground">Incomplete risk data<InfoTip text={`Not evaluated: ${assessment.missing.join(", ")}. The level uses the signals that are available.`} /></p>}
           </div>
         </div>
         <div className="mt-5 grid grid-cols-2 lg:grid-cols-4 gap-2">

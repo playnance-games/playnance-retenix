@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PlayersTable from "@/components/players/PlayersTable";
 import InfoTip from "@/components/InfoTip";
+import { RISK_LEVELS, riskLevelOf } from "@/lib/riskLevels";
 
 const SCORE_BANDS = [
   { v: "any", label: "Any score" },
@@ -20,9 +21,7 @@ const NETS = [
 ];
 const RISKS = [
   { v: "any", label: "Risk: any" },
-  { v: "clean", label: "Clean" },
-  { v: "watch", label: "Watch" },
-  { v: "block_offers", label: "Block offers" },
+  ...RISK_LEVELS.map((r) => ({ v: String(r.level), label: r.word })),
 ];
 const LIFECYCLES = [
   { v: "any", label: "Lifecycle: any" },
@@ -80,7 +79,7 @@ export default function Players() {
       list = list.filter((p) => p.score >= lo && p.score <= hi);
     }
     if (f.net && f.net !== "any") list = list.filter((p) => p.net_vs_house === f.net);
-    if (f.risk && f.risk !== "any") list = list.filter((p) => p.risk === f.risk);
+    if (f.risk && f.risk !== "any") list = list.filter((p) => String(riskLevelOf(p).level) === f.risk);
     if (f.lifecycle && f.lifecycle !== "any") list = list.filter((p) => p.lifecycle === f.lifecycle);
     if (f.favcat && f.favcat !== "any") list = list.filter((p) => p.favorite_category === f.favcat);
     if (f.lastseen !== "all") {

@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
-import { LifecycleChip, RiskChip } from "@/components/tags";
+import { RiskChip } from "@/components/tags";
+import { riskLevelOf } from "@/lib/riskLevels";
 import InfoTip from "@/components/InfoTip";
 import { ListShell, RowMain, ListMessage } from "@/components/executive/ListParts";
 import { fmtMoney } from "@/lib/retenixLogic";
@@ -21,7 +22,7 @@ export default function PlayersTable({ players, loading }) {
         "Player",
         <span key="s" className="inline-flex items-center">Score<InfoTip text="Retention score out of 10. Open the player card for the breakdown." /></span>,
         <span key="n" className="inline-flex items-center">Net vs house<InfoTip text="The player's net position, not their wallet balance." /></span>,
-        "Status",
+        <span key="r" className="inline-flex items-center">Risk<InfoTip text="Five levels, from Low (green) to Severe (red). It rises with time away, thin weekly play, and a lower score." /></span>,
         "Platforms",
         "",
       ]}
@@ -51,7 +52,7 @@ export default function PlayersTable({ players, loading }) {
               <div className="ex-scorebar"><span style={{ width: `${Math.min(100, Number(player.score) * 10)}%` }} /></div>
             </div>
             <div className={`ex-num ${NET_TONE[player.net_vs_house] || ""}`}>{player.net_amount == null ? "—" : fmtMoney(player.net_amount)}<small>{NET_LABEL[player.net_vs_house] || "Not recorded"}</small></div>
-            <div className="flex flex-wrap items-center gap-1.5"><LifecycleChip v={player.lifecycle} />{player.risk && player.risk !== "clean" && <RiskChip v={player.risk} />}</div>
+            <div><RiskChip level={riskLevelOf(player).level} /></div>
             <div className="ex-num text-[13px]">{main ? main.boss.platform : "—"}<small>{platforms.length > 1 ? `+${platforms.length - 1} more` : main ? "only platform" : "none"}</small></div>
             <ChevronRight className="w-4 h-4 ex-chevron" />
           </article>

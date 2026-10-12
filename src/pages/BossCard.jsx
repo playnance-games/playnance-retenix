@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { ArrowLeft, Crown, MapPin, Megaphone, Radio, Users, Gamepad2, Wallet, TrendingUp, ArrowUpRight, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LifecycleChip, RiskChip } from "@/components/tags";
+import { riskLevelOf } from "@/lib/riskLevels";
 import Stat from "@/components/StatTile";
 import { loadBossWithStats, money, TIER_CLASS } from "@/lib/bosses";
 
@@ -129,7 +130,7 @@ export default function BossCard() {
                   </td>
                   <td className="py-2.5 pr-4 tabular-nums font-semibold">{Number(player.score).toFixed(2)}</td>
                   <td className="py-2.5 pr-4"><LifecycleChip v={player.lifecycle} /></td>
-                  <td className="py-2.5 pr-4"><RiskChip v={player.risk} /></td>
+                  <td className="py-2.5 pr-4"><RiskChip level={riskLevelOf(player).level} /></td>
                   <td className="py-2.5 pr-4 text-xs text-muted-foreground">{player.current_game || player.favorites_stated?.[0] || "—"}</td>
                   <td className="py-2.5 text-right">
                     <Button asChild variant="outline" size="sm">

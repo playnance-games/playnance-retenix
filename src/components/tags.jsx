@@ -1,3 +1,5 @@
+import { RISK_LEVELS } from "@/lib/riskLevels";
+
 const CHIP = "px-2 py-0.5 rounded-full text-[11px] border-2 border-black font-bold";
 
 export function ScoreBadge({ score }) {
@@ -41,19 +43,13 @@ export function NetChip({ v, amount }) {
   );
 }
 
-const RISK_TITLE = {
-  clean: "Clean — no enabled, available risk signal triggered. Other eligibility gates still apply.",
-  watch: "Watch — review flagged signals. No automatic reduction in gifts or frequency.",
-  block_offers: "Block offers — cash and survey cases restricted; not an account suspension.",
-};
-
-export function RiskChip({ v }) {
-  const map = {
-    clean: "bg-emerald-400 text-black",
-    watch: "bg-amber-400 text-black",
-    block_offers: "bg-red-500 text-black",
-  };
-  return <span title={RISK_TITLE[v]} className={`${CHIP} ${map[v] || ""}`}>{v}</span>;
+export function RiskChip({ level }) {
+  const meta = RISK_LEVELS.find((r) => r.level === Number(level)) || RISK_LEVELS[0];
+  return (
+    <span title={`${meta.word} — level ${meta.level} of 5. ${meta.hint}`} className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${meta.cls}`}>
+      {meta.word}
+    </span>
+  );
 }
 
 export function FavChips({ stated = [], seen = [] }) {
