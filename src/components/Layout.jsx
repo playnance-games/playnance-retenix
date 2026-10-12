@@ -19,6 +19,11 @@ const PLAYER_NAV = [
 const BOSS_NAV = [
   { to: "/", label: "Brain", icon: BrainIcon, end: true },
   { to: "/bosses", label: "Bosses", icon: Crown },
+  { to: "/segments", label: "Segments", icon: Layers },
+  { to: "/cases", label: "Cases", icon: Zap },
+  { to: "/results", label: "Results", icon: BarChart3 },
+  { to: "/ab-tests", label: "A/B Tests", icon: FlaskConical },
+  { to: "/settings", label: "Settings", icon: SettingsIcon },
   { to: "/examples", label: "Examples", icon: Gamepad2 },
 ];
 
@@ -43,6 +48,7 @@ export default function Layout() {
     if (!allowed) navigate("/");
   };
 
-  const pageLabel = nav.find((item) => item.to === pathname)?.label || (pathname.startsWith("/players/") ? "Player profile" : "Retenix");
+  const pageLabel = nav.find((item) => item.to === pathname)?.label
+    || (pathname.startsWith("/players/") ? "Player profile" : pathname.startsWith("/bosses/") ? "Boss card" : "Retenix");
   return <ExecutiveLayout nav={nav} mode={mode} setMode={changeMode} pageLabel={pageLabel} light={light} setLight={setLight} chatOpen={chatOpen} setChatOpen={setChatOpen} />;
 }

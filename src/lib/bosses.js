@@ -53,7 +53,14 @@ export function buildBossStats(boss, allPlayers) {
     commission: Math.max(0, -playersNet) * (boss.commission_pct / 100),
     categories: categoryMix(players),
     topGames: topGames(players),
+    roster: players,
   };
+}
+
+export async function loadBossWithStats(id) {
+  const players = await loadPlayersWithStatus();
+  const boss = BOSSES.find((b) => b.id === id);
+  return boss ? buildBossStats(boss, players) : null;
 }
 
 export async function loadBossesWithStats() {

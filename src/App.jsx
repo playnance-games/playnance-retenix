@@ -18,6 +18,7 @@ import Brain from '@/pages/Brain';
 import ABTests from '@/pages/ABTests';
 import Examples from '@/pages/Examples';
 import Bosses from '@/pages/Bosses';
+import BossCard from '@/pages/BossCard';
 
 const AppRoutes = () => {
   return (
@@ -39,6 +40,7 @@ const AppRoutes = () => {
         <Route path="/ab-tests" element={<ABTests />} />
         <Route path="/examples" element={<Examples />} />
         <Route path="/bosses" element={<Bosses />} />
+        <Route path="/bosses/:id" element={<BossCard />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
