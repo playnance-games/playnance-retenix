@@ -1,0 +1,50 @@
+{
+  "name": "PlayerEvent",
+  "type": "object",
+  "properties": {
+    "player_id": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "event",
+        "retenix_action"
+      ]
+    },
+    "description": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "case_name": {
+      "type": "string"
+    },
+    "player_name": {
+      "type": "string"
+    },
+    "gift_amount": {
+      "type": "number"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "player",
+        "segment"
+      ]
+    },
+    "segment_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "player_id",
+    "kind",
+    "description"
+  ]
+}
