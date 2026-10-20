@@ -9,7 +9,7 @@ import Stat from "@/components/StatTile";
 import FireCasePanel from "@/components/FireCasePanel";
 import { fmtMoney, scoreBreakdown, derivePlayerStatus } from "@/lib/retenixLogic";
 import { assessPlayerRisk } from "@/lib/playerStatus";
-import { platformsForPlayer, playerDeposits, TIER_CLASS } from "@/lib/bosses";
+import { platformsForPlayer, playerDeposits } from "@/lib/bosses";
 
 const AVATAR = "https://media.base44.com/images/public/6aba0bdf07f37e4078b1455a/1e345eab9_generated_image.png";
 const FEATURES = ["staking", "streaming", "missions", "tournaments", "leaderboard", "g_coin"];
@@ -69,19 +69,13 @@ function PlatformsPanel({ player }) {
     <Panel icon={Globe} title={`Plays on ${platforms.length} ${platforms.length === 1 ? "platform" : "platforms"}`} tip={T.platforms} className="mt-5">
       {platforms.length === 0 ? <p className="text-sm text-muted-foreground">Not linked to any boss's platform.</p> : (
         <div className="divide-y divide-border/60">
-          {platforms.map(({ boss, share, primary }) => (
+          {platforms.map(({ boss, share }) => (
             <div key={boss.id} className="py-3 first:pt-0 last:pb-0 grid gap-3 items-center md:grid-cols-[minmax(0,1.4fr)_minmax(140px,1fr)_110px_110px_auto]">
               <div className="flex items-center gap-3 min-w-0">
                 <span className="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center shrink-0"><Crown className="w-5 h-5" /></span>
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold">{boss.platform}</span>
-                    {primary && <span className="text-[10px] font-semibold uppercase tracking-wide rounded px-2 py-0.5 bg-accent text-accent-foreground">Main</span>}
-                  </div>
-                  <div className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
-                    Boss {boss.name}
-                    <span className={`text-[10px] font-semibold uppercase tracking-wide rounded px-1.5 py-0.5 ${TIER_CLASS[boss.tier] || "bg-muted"}`}>{boss.tier}</span>
-                  </div>
+                  <div className="font-semibold">{boss.platform}</div>
+                  <div className="text-xs text-muted-foreground">Boss {boss.name}</div>
                 </div>
               </div>
               <div>
