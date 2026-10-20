@@ -89,8 +89,8 @@ export default function BossCard() {
               ["House net", `${boss.houseNet >= 0 ? "+" : "−"}${money(Math.abs(boss.houseNet))}`],
               ["Active", boss.active],
               ["New", boss.newPlayers],
-              ["At-risk", boss.atRisk],
-              ["Blocked offers", boss.blocked],
+              ["High or severe", boss.roster.filter((m) => riskLevelOf(m.player).level >= 4).length],
+              ["Low or mild", boss.roster.filter((m) => riskLevelOf(m.player).level <= 2).length],
             ].map(([label, value]) => (
               <div key={label} className="flex items-center justify-between py-2.5 border-b border-border/50">
                 <dt className="text-xs text-muted-foreground">{label}</dt>

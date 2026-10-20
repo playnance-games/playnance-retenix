@@ -8,7 +8,9 @@ import InfoTip from "@/components/InfoTip";
 import Stat from "@/components/StatTile";
 import FireCasePanel from "@/components/FireCasePanel";
 import { fmtMoney, scoreBreakdown, derivePlayerStatus } from "@/lib/retenixLogic";
-import { assessPlayerRisk } from "@/lib/playerStatus";
+import { riskLevelOf } from "@/lib/riskLevels";
+import { nextBestAction } from "@/lib/nextAction";
+import { RiskChip } from "@/components/tags";
 import { platformsForPlayer, playerDeposits } from "@/lib/bosses";
 
 const AVATAR = "https://media.base44.com/images/public/6aba0bdf07f37e4078b1455a/1e345eab9_generated_image.png";
@@ -16,7 +18,7 @@ const FEATURES = ["staking", "streaming", "missions", "tournaments", "leaderboar
 
 const T = {
   net: "Net vs house. Up = cash disabled, education only. Down = cash eligible (subject to caps). Too_thin = margin too small for cash.",
-  score: "Retention score 1.00–10.00. Fixed weights: risk 40%, high roller 40%, engagement 10%, lifetime 10%. Contributions are calibrated to the stored score.",
+  score: "Retention score 1.00–10.00. Fixed weights: risk 40%, high roller 40%, engagement 10%, lifetime 10%. Risk is computed from play and deposits, then used as one score input. It does not read the score back.",
   totalDep: "Lifetime sum of all deposits, across every platform the player uses.",
   wagered: "Estimated total amount wagered across all sessions.",
   withdrawals: "Lifetime withdrawals.",
@@ -123,7 +125,8 @@ export default function PlayerCard() {
   const ff = player.feature_flags || {};
   const channels = player.channels || {};
   const breakdown = scoreBreakdown(player, settings);
-  const assessment = assessPlayerRisk(player, settings);
+  const risk = riskLevelOf(player);
+  const action = nextBestAction(player, settings);
   const usedFeatures = FEATURES.filter((f) => ff[f]);
   const netTone = player.net_amount < 0 ? "text-red-600" : player.net_amount > 0 ? "text-emerald-600" : "";
 
@@ -158,8 +161,6 @@ export default function PlayerCard() {
               <span className="inline-flex items-center gap-1"><Globe className="w-4 h-4" />{platformsForPlayer(player.player_id).map((m) => m.boss.platform).join(", ") || "no platform"}</span>
               <span className="inline-flex items-center gap-1"><CalendarDays className="w-4 h-4" />Last seen {new Date(player.last_seen).toLocaleDateString()}</span>
             </div>
-            {!!assessment.reasons.length && <p className="mt-2 text-xs font-medium">{assessment.reasons.map((r) => r.label).join("; ")}</p>}
-            {!!assessment.missing.length && <p className="mt-1 text-[11px] text-muted-foreground">Incomplete risk data<InfoTip text={`Not evaluated: ${assessment.missing.join(", ")}. The level uses the signals that are available.`} /></p>}
           </div>
         </div>
         <div className="mt-5 grid grid-cols-2 lg:grid-cols-4 gap-2">
@@ -168,6 +169,14 @@ export default function PlayerCard() {
           <Stat icon={player.net_amount < 0 ? TrendingDown : TrendingUp} label="Net vs house" value={fmtMoney(player.net_amount)} hint={T.netAmt} tone={netTone} />
           <Stat icon={Clock} label="Sessions / week" value={player.sessions_per_week ?? "—"} />
         </div>
+      </section>
+
+      <section className="lux-surface rounded-2xl border border-border bg-card p-5 mt-5">
+        <div className="flex items-center gap-2"><h2 className="text-sm font-heading font-medium tracking-wide">Next action</h2><RiskChip level={risk.level} /></div>
+        <p className="mt-1 text-xs text-muted-foreground">{risk.sentence}</p>
+        <p className={`mt-2 text-base font-semibold ${action.tone}`}>{action.title}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{action.why}</p>
+        <p className="mt-2 text-xs text-muted-foreground">{action.expected} Risk confidence is {risk.confidence}{risk.missing.length ? ` (not loaded: ${risk.missing.join(", ")})` : ""}.</p>
       </section>
 
       <PlatformsPanel player={player} />

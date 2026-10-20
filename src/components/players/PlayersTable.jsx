@@ -22,7 +22,7 @@ export default function PlayersTable({ players, loading }) {
         "Player",
         <span key="s" className="inline-flex items-center">Score<InfoTip text="Retention score out of 10. Open the player card for the breakdown." /></span>,
         <span key="n" className="inline-flex items-center">Net vs house<InfoTip text="The player's net position, not their wallet balance." /></span>,
-        <span key="r" className="inline-flex items-center">Status<InfoTip text="Risk level, from Low (green) to Severe (red). It rises with time away, thin weekly play, and a lower score." /></span>,
+        <span key="r" className="inline-flex items-center">Status<InfoTip text="Risk from play and deposits, not from the score. Low stays eligible. Severe waits for a review before any cash gift." /></span>,
         "Platforms",
         "",
       ]}

@@ -7,6 +7,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import SettingsAiChat from '@/components/settings/SettingsAiChat';
 import { derivePlayerStatus } from '@/lib/playerStatus';
 import { FIXED_SCORE_WEIGHTS, SCORE_WEIGHT_DEFS } from '@/lib/retenixLogic';
+import { readAudit, recordAudit } from '@/lib/auditLog';
 import { useMode } from "@/lib/ModeContext";
 import { Save, Gift, Gauge } from "lucide-react";
 import InfoTip from "@/components/InfoTip";
@@ -15,6 +16,7 @@ const DEFAULT = {
   haircut_pct: 20,
   per_gift_ceiling: "1x",
   cash_window_days: 7,
+  daily_cash_budget: 500,
   score_weights: FIXED_SCORE_WEIGHTS,
 };
 
@@ -45,6 +47,7 @@ export default function Settings() {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [audit, setAudit] = useState(() => readAudit());
   useEffect(() => {
     (async () => {
       const list = await base44.entities.Settings.list();
@@ -82,6 +85,7 @@ export default function Settings() {
       const patches = updated.filter((p, i) => ['risk','lifecycle','net_vs_house'].some(key => p[key] !== current[i][key])).map(p => ({id:p.id,risk:p.risk,lifecycle:p.lifecycle,net_vs_house:p.net_vs_house}));
       for (let i=0;i<patches.length;i+=500) await base44.entities.Player.bulkUpdate(patches.slice(i,i+500));
       setSaved(true);
+      setAudit(recordAudit(`Saved cash settings. Haircut ${s.haircut_pct}%, window ${s.cash_window_days} days, daily cap $${Number(s.daily_cash_budget) || 0}.`));
     } catch (e) { setError(e.message || 'Could not finish saving settings and refreshing player tags. Please retry.'); }
     finally { setSaving(false); }
   };
@@ -123,7 +127,7 @@ export default function Settings() {
         <section className="lux-surface rounded-2xl border border-border bg-card p-5 mt-5">
           <SectionTitle tip={FT.haircut}><Gift className="w-4 h-4 text-accent" /> Cash gift</SectionTitle>
           <p className="text-sm text-muted-foreground -mt-2 mb-4">A cash gift is min(haircut% of how far the player is down, ceiling × their average deposit). One gift per player per window. Bosses don't give cash gifts.</p>
-          <div className="grid sm:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
             <div>
               <Label className="text-xs flex items-center gap-1">Haircut % of net down <InfoTip text={FT.haircut} /></Label>
               <Input type="number" min="0" max="100" value={s.haircut_pct} onChange={(e) => set("haircut_pct", Number(e.target.value))} className="mt-1" />
@@ -146,7 +150,19 @@ export default function Settings() {
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">days</span>
               </div>
             </div>
+            <div>
+              <Label className="text-xs flex items-center gap-1">Daily cash cap <InfoTip text="Cases that would fire on the current roster are flagged when their estimated gifts pass this amount." /></Label>
+              <Input type="number" min="0" value={s.daily_cash_budget ?? 500} onChange={(e) => set("daily_cash_budget", Number(e.target.value))} className="mt-1" />
+            </div>
           </div>
+          {!!audit.length && (
+            <div className="mt-4 border-t border-border pt-3">
+              <p className="text-xs font-medium text-muted-foreground">Recent saves on this browser</p>
+              <ul className="mt-2 space-y-1">
+                {audit.slice(0, 5).map((entry) => <li key={entry.at} className="text-xs text-muted-foreground">{new Date(entry.at).toLocaleString()} — {entry.summary}</li>)}
+              </ul>
+            </div>
+          )}
         </section>
       ) : (
         <p className="mt-5 text-sm text-muted-foreground rounded-xl border border-dashed border-border px-4 py-3">Cash gifts belong to Players mode. A boss's platform doesn't pay them.</p>

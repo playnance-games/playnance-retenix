@@ -140,7 +140,7 @@ export function bestCaseForPlayer(player, cases, settings, segments) {
 export const FIXED_SCORE_WEIGHTS = { risk: 40, high_roller: 40, engagement: 10, lifetime: 10 };
 
 export const SCORE_WEIGHT_DEFS = [
-  { key: "risk", label: "Risk", value: 40, desc: "Lower risk scores higher. Low is 10 out of 10, Severe is 2." },
+  { key: "risk", label: "Risk", value: 40, desc: "Behavior only: time away, weekly play, and deposit rhythm. The score is not fed back into risk. Lower risk scores higher." },
   { key: "high_roller", label: "High roller", value: 40, desc: "Average deposit size. Larger deposits score higher." },
   { key: "engagement", label: "Engagement", value: 10, desc: "How often they play, from sessions per week." },
   { key: "lifetime", label: "Lifetime", value: 10, desc: "How established the account is, from lifetime deposit count." },

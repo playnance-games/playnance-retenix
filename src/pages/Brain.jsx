@@ -3,7 +3,10 @@ import { base44 } from "@/api/base44Client";
 import { loadPlayersWithStatus } from "@/lib/playerData";
 import { loadBossesWithStats, money } from "@/lib/bosses";
 import { useMode } from "@/lib/ModeContext";
+import { Link } from "react-router-dom";
 import BrainMap from "@/components/brain/BrainMap";
+import { workQueue } from "@/lib/workQueue";
+import { riskLevelOf } from "@/lib/riskLevels";
 import "@/components/brain/brainPop.css";
 
 const BOSS_STATS = [
@@ -32,6 +35,7 @@ export default function Brain() {
   const { mode } = useMode();
   const [data, setData] = useState({ cases: [], segments: [], players: [] });
   const [bosses, setBosses] = useState([]);
+  const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     let active = true;
@@ -41,12 +45,16 @@ export default function Brain() {
         const list = await loadBossesWithStats();
         if (active) setBosses(list);
       } else {
-        const [cases, segments, players] = await Promise.all([
+        const [cases, segments, players, stored] = await Promise.all([
           base44.entities.UseCase.list(),
           base44.entities.Segment.list(),
           loadPlayersWithStatus(),
+          base44.entities.Settings.list(),
         ]);
-        if (active) setData({ cases, segments, players });
+        if (active) {
+          setData({ cases, segments, players });
+          setSettings({ daily_cash_budget: 500, ...(stored[0] || {}) });
+        }
       }
       if (active) setLoading(false);
     })();
@@ -61,6 +69,39 @@ export default function Brain() {
           <h1 className="pop-title">{bossMode ? "Bosses brain" : "Retenix brain"}</h1>
           <p className="pop-subtitle">{bossMode ? "Bosses, the players they bring, and what those players are worth." : "Players, cases and segments at a glance."}</p>
         </header>
+        {!bossMode && !loading && (
+          <section className="mb-6 rounded-2xl border border-border bg-card p-4">
+            <h2 className="text-sm font-semibold">Today</h2>
+            <ul className="mt-3 space-y-2">
+              {workQueue(data.players, data.cases, settings).map((item) => (
+                <li key={item.title}>
+                  <Link to={item.to} className="block rounded-xl border border-border px-3 py-2 hover:bg-muted/40">
+                    <span className="text-sm font-medium">{item.title}</span>
+                    <span className="block text-xs text-muted-foreground">{item.detail}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        {bossMode && !loading && (
+          <section className="mb-6 rounded-2xl border border-border bg-card p-4">
+            <h2 className="text-sm font-semibold">Platforms needing attention</h2>
+            <ul className="mt-3 space-y-2">
+              {bosses.map((boss) => {
+                const attention = boss.roster.filter((m) => riskLevelOf(m.player).level >= 4).length;
+                return (
+                  <li key={boss.id}>
+                    <Link to={`/bosses/${boss.id}`} className="flex items-center justify-between rounded-xl border border-border px-3 py-2 hover:bg-muted/40">
+                      <span className="text-sm font-medium">{boss.platform}</span>
+                      <span className="text-xs text-muted-foreground">{attention} high or severe · {money(boss.commission)} commission</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
         <section className="pop-layout">
           {bossMode
             ? <BrainMap key="bosses" palette="bosses" stats={BOSS_STATS} values={bossValues(bosses)} loading={loading} label="Bosses overview" />

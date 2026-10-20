@@ -10,6 +10,10 @@ import CaseRegister from "@/components/executive/CaseRegister";
 import CaseRegisterRow from "@/components/executive/CaseRegisterRow";
 import InfoTip from "@/components/InfoTip";
 import { TYPE_LABELS, TYPE_TIPS } from "@/lib/caseConstants";
+import { loadPlayersWithStatus } from "@/lib/playerData";
+import { measureCases } from "@/lib/campaigns";
+import { fmtMoney } from "@/lib/retenixLogic";
+import { dataFreshness } from "@/lib/riskLevels";
 
 export { TYPE_LABELS };
 
@@ -24,14 +28,18 @@ export default function Cases() {
   const [forAll, setForAll] = useState(false);
   const [editCase, setEditCase] = useState(null);
   const [abRuns, setAbRuns] = useState([]);
+  const [players, setPlayers] = useState([]);
+  const [settings, setSettings] = useState({});
 
   const load = async () => {
-    const [c, s, ab] = await Promise.all([
+    const [c, s, ab, roster, stored] = await Promise.all([
       base44.entities.UseCase.list(),
       base44.entities.Segment.list(),
       base44.entities.ABRun.list(),
+      loadPlayersWithStatus(),
+      base44.entities.Settings.list(),
     ]);
-    setCases(c); setSegments(s); setAbRuns(ab); setLoading(false);
+    setCases(c); setSegments(s); setAbRuns(ab); setPlayers(roster); setSettings({ daily_cash_budget: 500, ...(stored[0] || {}) }); setLoading(false);
   };
   useEffect(() => { load(); }, []);
 
@@ -47,6 +55,9 @@ export default function Cases() {
   const createForAll = () => { setGateOpen(false); setForAll(true); setCreateOpen(true); };
   const openEdit = (uc) => { setEditCase(uc); };
 
+  const measured = measureCases(cases, players, segments, settings);
+  const fresh = dataFreshness(players);
+  const budget = Number(settings.daily_cash_budget) || 0;
   const renderCaseRow = (uc) => (
     <CaseRegisterRow key={uc.id} uc={uc} typeLabel={TYPE_LABELS[uc.type] || uc.type} typeTip={TYPE_TIPS[uc.type] || TYPE_LABELS[uc.type] || uc.type} hasAb={abRuns.some((r) => r.reward_case_id === uc.id)} onEdit={openEdit} onDelete={remove} segments={segments} />
   );
@@ -63,6 +74,18 @@ export default function Cases() {
           <Button className="ex-btn primary" size="sm" onClick={openNew}><Plus className="w-4 h-4" /> New case</Button>
         </div>
       </header>
+
+      <section className="lux-surface rounded-2xl border border-border bg-card p-4 mb-5">
+        <h2 className="text-sm font-semibold">What would fire on the current roster</h2>
+        <p className="mt-1 text-xs text-muted-foreground">{fresh.note} These counts are eligibility on today's loaded players, not recorded sends.</p>
+        <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          <span><strong>{measured.on}</strong> cases on</span>
+          <span><strong>{measured.firing}</strong> would-fire matches</span>
+          <span><strong>{fmtMoney(measured.cost)}</strong> estimated gifts</span>
+          <span><strong>{fmtMoney(budget)}</strong> daily cash cap</span>
+        </div>
+        {budget > 0 && measured.cost > budget && <p className="mt-2 text-xs text-red-600">Estimated gifts are over the daily cash cap. Hold the extra cash cases or raise the cap in Settings.</p>}
+      </section>
 
       {cases.length === 0 && !loading ? (
         <div className="flex flex-col items-center justify-center text-center py-16">
